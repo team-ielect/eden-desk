@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Polling Status</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Global Firebase Initialization -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCdyka1XrXKXyfmHjhQsKvDOvHT8dPnmIg",
+            authDomain: "nova-d0771.firebaseapp.com",
+            databaseURL: "https://nova-d0771-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "nova-d0771",
+            storageBucket: "nova-d0771.firebasestorage.app",
+            messagingSenderId: "650150783330",
+            appId: "1:650150783330:web:054b60bc5fb987a087243b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        window.firebaseDB = db;
+    </script>
+
+    <style>
+        /* --- Theme Variables --- */
+        :root {
+            --bg-color: #0f1014;
+            --card-bg: #1c1e26;
+            --input-bg: #272932;
+            --primary-color: #ff3b30;
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --border-color: #333645;
+            --success-color: #00e676;
+            --pending-color: #5e5ce6;
+            --error-color: #ff453a;
+            --primary-hover: #d63026;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        html,
+        body {
+            overflow-x: hidden;
+            /* Strictly prevent horizontal scroll */
+            width: 100%;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* --- Header --- */
+        header {
+            height: 70px;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            width: 100%;
+        }
+
+        .brand {
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+
+        .brand i {
+            color: var(--primary-color);
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 230, 118, 0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 230, 118, 0.3);
+            font-size: 0.85rem;
+            color: var(--success-color);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success-color);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(0, 230, 118, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 230, 118, 0);
+            }
+        }
+
+        .btn-header {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .btn-header:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        /* --- Main Layout --- */
+        main {
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            flex-grow: 1;
+            /* Ensure main doesn't cause overflow */
+            box-sizing: border-box;
+        }
+
+        .election-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            word-wrap: break-word;
+        }
+
+        .election-meta {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* --- Stats Grid --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            /* Reduced minmax for better fit */
+            gap: 20px;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+            min-width: 0;
+            /* Critical fix for grid overflow */
+        }
+
+        .stat-card.strip-blue::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: #0a84ff;
+        }
+
+        .stat-card.strip-green::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--success-color);
+        }
+
+        .stat-card.strip-purple::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--pending-color);
+        }
+
+        .stat-card.strip-red::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--primary-color);
+        }
+
+        .stat-title {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 5px;
+            word-wrap: break-word;
+        }
+
+        .stat-sub {
+            font-size: 0.85rem;
+            color: var(--success-color);
+        }
+
+        /* --- Charts Section --- */
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+
+        /* Responsive Breakpoint for Charts */
+        @media (max-width: 1024px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+                /* Stack on tablets/smaller laptops */
+            }
+        }
+
+        .chart-card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            /* Critical fix for grid overflow */
+            width: 100%;
+        }
+
+        .chart-header {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            gap: 5px;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .chart-data-debug {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+
+        .chart-canvas-container {
+            width: 100%;
+            height: 350px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+        }
+
+        /* Global fix to ensure canvases don't overflow */
+        canvas {
+            max-width: 100% !important;
+        }
+
+        /* --- Booth View --- */
+        .booth-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .booth-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .booth-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.3s;
+            min-width: 0;
+        }
+
+        .booth-card.online {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .booth-card.offline {
+            border-left: 4px solid var(--error-color);
+            opacity: 0.6;
+        }
+
+        .booth-info h3 {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+
+        .booth-info p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .booth-status-icon {
+            font-size: 1.5rem;
+        }
+
+        .booth-status-icon.online {
+            color: var(--success-color);
+        }
+
+        .booth-status-icon.offline {
+            color: var(--error-color);
+        }
+
+        .voter-tag {
+            margin-top: 10px;
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: var(--primary-color);
+        }
+
+        /* --- Modals --- */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 400px;
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            position: relative;
+        }
+
+        .form-control {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 12px 15px;
+            border-radius: 8px;
+            outline: none;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+            transition: 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .modal-error {
+            color: var(--error-color);
+            font-size: 0.85rem;
+            margin-top: -10px;
+            margin-bottom: 15px;
+            display: none;
+            background: rgba(255, 82, 82, 0.1);
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        /* --- Loader --- */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 59, 48, 0.3);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loader -->
+    <div id="loader">
+        <div class="spinner"></div>
+        <p style="color: var(--text-muted); font-size: 1.1rem;">Connecting to Live Feed...</p>
+    </div>
+
+    <!-- Election Selection Modal -->
+    <div id="electionModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 10px;">Enter Election ID</h3>
+            <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
+                Please enter Election ID provided by administrator.
+            </p>
+            <input type="text" id="manualElecId" class="form-control" placeholder="e.g. nova-d0771">
+            <div id="elecModalError" class="modal-error">Election ID not found. Please check and try again.</div>
+            <button class="btn btn-primary" onclick="window.submitElectionId()">
+                <i class="fa-solid fa-link"></i> Connect
+            </button>
+        </div>
+    </div>
+
+    <header>
+        <div class="brand">
+            <i class="fa-solid fa-square-poll-vertical"></i> NOVA LIVE
+        </div>
+
+        <div class="header-controls">
+            <button class="btn-header" onclick="window.openElectionModal()">
+                <i class="fa-solid fa-arrows-rotate"></i> Change Election
+            </button>
+            <div class="live-indicator">
+                <div class="live-dot"></div> LIVE
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <h1 class="election-title" id="elecTitle">Select an Election</h1>
+        <div class="election-meta">
+            <span id="elecIdDisplay">--</span>
+            <span><i class="fa-regular fa-clock"></i> <span id="lastUpdate">--</span></span>
+        </div>
+
+        <!-- Hero Stats -->
+        <div class="stats-grid">
+            <div class="stat-card strip-blue">
+                <div class="stat-title">Total Eligible Voters</div>
+                <div class="stat-value" style="color: #0a84ff;" id="eligibleVoters">...</div>
+                <div class="stat-sub" style="color: var(--text-muted);">Registered in DB</div>
+            </div>
+            <div class="stat-card strip-green">
+                <div class="stat-title">Votes Completed</div>
+                <div class="stat-value" style="color: var(--success-color);" id="totalVotes">0</div>
+                <div class="stat-sub"><i class="fa-solid fa-arrow-up"></i> Successfully Cast</div>
+            </div>
+            <div class="stat-card strip-purple">
+                <div class="stat-title">Remaining Voters</div>
+                <div class="stat-value" style="color: var(--pending-color);" id="remainingVoters">0</div>
+                <div class="stat-sub">Yet to Vote</div>
+            </div>
+            <div class="stat-card strip-red">
+                <div class="stat-title">Candidates</div>
+                <div class="stat-value" style="color: var(--primary-color);" id="candidateCount">0</div>
+                <div class="stat-sub" style="color: var(--text-muted);">In the race</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-container">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Voter Participation Status</div>
+                    <div class="chart-data-debug" id="debugPie">Waiting for data...</div>
+                </div>
+                <div class="chart-canvas-container">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Status Comparison</div>
+                    <div class="chart-data-debug" id="debugBar">Waiting for data...</div>
+                </div>
+                <div class="chart-canvas-container">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booth Live Status -->
+        <div style="margin-top: 40px; margin-bottom: 20px;">
+            <h2 style="font-size: 1.2rem; color: var(--text-muted);">Live Booth Monitoring</h2>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">Real-time status of voting booths.</p>
+        </div>
+        <div class="booth-grid" id="boothGrid"></div>
+        <div id="noBoothsMsg" class="hidden" style="text-align:center; padding: 40px; color: var(--text-muted);">
+            No booths online or configured.
+        </div>
+    </main>
+
+    <script type="module">
+        import { ref, get, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        const db = window.firebaseDB;
+
+        let electionId = null;
+        let totalVotersCount = 0;
+        let totalVotesCast = 0;
+        let candidateCount = 0;
+
+        // Listeners
+        let voteListener = null;
+        let boothListener = null;
+
+        // Chart Instances
+        let barChartInstance = null;
+        let pieChartInstance = null;
+
+        // Fixed Colors
+        const COLOR_VOTED = '#00e676';
+        const COLOR_REMAINING = '#5e5ce6';
+
+        Chart.defaults.color = '#a0a0a0';
+        Chart.defaults.borderColor = '#333645';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+
+        // --- Global Window Functions ---
+        window.openElectionModal = () => {
+            document.getElementById('electionModal').style.display = 'flex';
+            document.getElementById('manualElecId').focus();
+        };
+
+        window.submitElectionId = async () => {
+            const val = document.getElementById('manualElecId').value.trim();
+            const errorDiv = document.getElementById('elecModalError');
+            const btn = document.querySelector('#electionModal .btn');
+
+            if (!val) return;
+
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+            btn.disabled = true;
+            errorDiv.style.display = 'none';
+
+            try {
+                const snap = await get(ref(db, `elections/${val}`));
+                if (!snap.exists()) throw new Error("Not Found");
+
+                sessionStorage.setItem('currentElectionId', val);
+                document.getElementById('electionModal').style.display = 'none';
+                document.getElementById('manualElecId').value = '';
+                await loadElection(val);
+
+            } catch (e) {
+                errorDiv.innerText = "Invalid Election ID.";
+                errorDiv.style.display = 'block';
+                btn.innerHTML = '<i class="fa-solid fa-link"></i> Connect';
+                btn.disabled = false;
+            }
+        };
+
+        // --- Core Logic ---
+
+        async function checkStorageAndInit() {
+            const storedId = sessionStorage.getItem('currentElectionId');
+            if (storedId) {
+                await loadElection(storedId);
+            } else {
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('electionModal').style.display = 'flex';
+            }
+        }
+
+        async function loadElection(id) {
+            electionId = id;
+            document.getElementById('elecIdDisplay').innerText = `ID: ${electionId}`;
+            document.getElementById('loader').style.display = 'flex';
+
+            if (voteListener) voteListener();
+            if (boothListener) boothListener();
+
+            try {
+                // 1. Get Election Title
+                const elecSnap = await get(ref(db, `elections/${electionId}`));
+                if (!elecSnap.exists()) throw new Error("Election vanished");
+                document.getElementById('elecTitle').innerText = elecSnap.val().title || "Live Election Status";
+
+                // 2. Listen to Candidates Count
+                const candSnap = await get(ref(db, `elections/${electionId}/candidates`));
+                candidateCount = candSnap.exists() ? Object.keys(candSnap.val()).length : 0;
+                document.getElementById('candidateCount').innerText = candidateCount;
+
+                // 3. Listen to Votes (Voted Count)
+                voteListener = onValue(ref(db, `elections/${electionId}/votes_voters`), (snapshot) => {
+                    const data = snapshot.val();
+                    totalVotesCast = data ? Object.keys(data).length : 0;
+                    document.getElementById('totalVotes').innerText = totalVotesCast;
+                    updateDashboard();
+                });
+
+                // 4. Listen to Booths
+                boothListener = onValue(ref(db, `elections/${electionId}/booths`), (snap) => {
+                    renderBooths(snap.val());
+                });
+
+                // IMPORTANT FIX: Do NOT block the UI loader for the heavy voter count calculation.
+                // We initialize charts immediately with what we have (or 0) and load the total in background.
+
+                initCharts();
+                updateDashboard(); // Initial render
+
+                // 5. Get Eligible Voters (Background task)
+                // We do NOT await this here, allowing the UI to load immediately.
+                fetchEligibleVotersCount();
+
+                // Hide loader NOW, don't wait for voter fetch
+                setTimeout(() => {
+                    document.getElementById('loader').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+                }, 800);
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('elecTitle').innerText = "Error Loading Data";
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
+
+        async function fetchEligibleVotersCount() {
+            try {
+                const votersSnap = await get(ref(db, `voters`));
+                if (votersSnap.exists()) {
+                    const allVoters = votersSnap.val();
+                    let count = 0;
+                    // Using a loop here, but since it's async/background, UI is responsive
+                    for (let vid in allVoters) {
+                        if (allVoters[vid].appear && allVoters[vid].appear[electionId]) {
+                            count++;
+                        }
+                    }
+                    totalVotersCount = count;
+                    document.getElementById('eligibleVoters').innerText = count;
+                    updateDashboard();
+                } else {
+                    totalVotersCount = 0;
+                    document.getElementById('eligibleVoters').innerText = 0;
+                    updateDashboard();
+                }
+            } catch (err) {
+                console.error("Failed to fetch voter count:", err);
+                document.getElementById('eligibleVoters').innerText = "Error";
+            }
+        }
+
+        function updateDashboard() {
+            const now = new Date();
+            document.getElementById('lastUpdate').innerText = now.toLocaleTimeString();
+
+            const remaining = totalVotersCount - totalVotesCast;
+            document.getElementById('remainingVoters').innerText = remaining < 0 ? 0 : remaining;
+
+            // Update Debug Text
+            const debugText = `Total: ${totalVotersCount} | Voted: ${totalVotesCast} | Rem: ${remaining}`;
+            document.getElementById('debugPie').innerText = debugText;
+            document.getElementById('debugBar').innerText = debugText;
+
+            // Data for charts
+            const labels = ['Voted', 'Remaining'];
+            const dataPoints = [totalVotesCast, remaining];
+            const colors = [COLOR_VOTED, COLOR_REMAINING];
+
+            updateCharts(labels, dataPoints, colors);
+        }
+
+        function initCharts() {
+            // Destroy existing instances if they exist (to avoid duplicates on re-load)
+            if (barChartInstance) barChartInstance.destroy();
+            if (pieChartInstance) pieChartInstance.destroy();
+
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            const ctxPie = document.getElementById('pieChart').getContext('2d');
+
+            // Bar Chart
+            barChartInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: ['Voted', 'Remaining'],
+                    datasets: [{
+                        label: 'Voters',
+                        data: [0, 0],
+                        backgroundColor: [COLOR_VOTED, COLOR_REMAINING],
+                        borderRadius: 6,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } },
+                    animation: { duration: 750 }
+                }
+            });
+
+            // Pie Chart
+            pieChartInstance = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Voted', 'Not Voted'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: [COLOR_VOTED, COLOR_REMAINING],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    let label = context.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed !== null) { label += context.parsed; }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCharts(labels, data, colors) {
+            if (!barChartInstance || !pieChartInstance) return;
+
+            barChartInstance.data.labels = labels;
+            barChartInstance.data.datasets[0].data = data;
+            barChartInstance.data.datasets[0].backgroundColor = colors;
+            barChartInstance.update();
+
+            pieChartInstance.data.labels = labels;
+            pieChartInstance.data.datasets[0].data = data;
+            pieChartInstance.data.datasets[0].backgroundColor = colors;
+            pieChartInstance.update();
+        }
+
+        function renderBooths(data) {
+            const grid = document.getElementById('boothGrid');
+            const noMsg = document.getElementById('noBoothsMsg');
+            grid.innerHTML = '';
+
+            if (!data) {
+                noMsg.classList.remove('hidden');
+                return;
+            }
+            noMsg.classList.add('hidden');
+
+            Object.keys(data).forEach(boothId => {
+                const booth = data[boothId];
+                const isOnline = (Date.now() - booth.lastHeartbeat < 10000);
+
+                const card = document.createElement('div');
+                card.className = `booth-card ${isOnline ? 'online' : 'offline'}`;
+
+                const voterInfo = booth.currentVoterName
+                    ? `<div class="voter-tag"><i class="fa-solid fa-user"></i> ${booth.currentVoterName}</div>`
+                    : `<div class="voter-tag" style="color:var(--text-muted)"><i class="fa-solid fa-hourglass"></i> Idle</div>`;
+
+                card.innerHTML = `
+                    <div class="booth-info">
+                        <h3>Booth ${boothId}</h3>
+                        <p>Status: ${isOnline ? '<span style="color:var(--success-color)">Online</span>' : '<span style="color:var(--error-color)">Offline</span>'}</p>
+                        ${voterInfo}
+                    </div>
+                    <div class="booth-status-icon ${isOnline ? 'online' : 'offline'}">
+                        <i class="fa-solid ${isOnline ? 'fa-wifi' : 'fa-power-off'}"></i>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        checkStorageAndInit();
+    </script>
+</body>
+
+</html>

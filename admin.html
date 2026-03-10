@@ -1,0 +1,2726 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Global Firebase Initialization -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCdyka1XrXKXyfmHjhQsKvDOvHT8dPnmIg",
+            authDomain: "nova-d0771.firebaseapp.com",
+            databaseURL: "https://nova-d0771-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "nova-d0771",
+            storageBucket: "nova-d0771.firebasestorage.app",
+            messagingSenderId: "650150783330",
+            appId: "1:650150783330:web:054b60bc5fb987a087243b"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Make 'db' available globally to all other scripts on this page
+        window.firebaseDB = db;
+        console.log("Firebase initialized and attached to window.firebaseDB");
+    </script>
+
+    <style>
+        /* --- Theme Variables --- */
+        :root {
+            --bg-color: #0f1014;
+            --sidebar-bg: #16181e;
+            --card-bg: #1c1e26;
+            --input-bg: #272932;
+            --primary-color: #7c4dff;
+            --primary-hover: #651fff;
+            --primary-gradient: linear-gradient(135deg, #7c4dff, #b388ff);
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --border-color: #333645;
+            --success-color: #00e676;
+            --error-color: #ff5252;
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* --- Loader --- */
+        #fullLoader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(124, 77, 255, 0.3);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+            z-index: 1001;
+            /* Above Bottom Nav when open */
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+        }
+
+        .brand i {
+            color: var(--primary-color);
+        }
+
+        .nav-links {
+            list-style: none;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(124, 77, 255, 0.1);
+            color: var(--primary-color);
+        }
+
+        .nav-item.active {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 15px rgba(124, 77, 255, 0.4);
+        }
+
+        .sidebar-logout {
+            background: transparent;
+            border: 1px solid var(--error-color);
+            color: var(--error-color);
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .sidebar-logout:hover {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        .user-profile {
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+
+        /* --- Main Content --- */
+        .main-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 30px;
+            position: relative;
+            display: none;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .header h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- Cards & Grid --- */
+        .hero-card {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .hero-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--primary-color);
+        }
+
+        .hero-label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .hero-title-text {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.3;
+        }
+
+        .hero-subtitle-text {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(124, 77, 255, 0.3);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--primary-color);
+        }
+
+        .stat-title {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .stat-value.highlight {
+            color: var(--primary-color);
+            text-shadow: 0 0 10px rgba(124, 77, 255, 0.4);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* --- Buttons & Inputs --- */
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 5px;
+            transition: color 0.2s;
+        }
+
+        .icon-btn:hover {
+            color: var(--primary-color);
+        }
+
+        .form-control {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 12px;
+            border-radius: 8px;
+            outline: none;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(124, 77, 255, 0.1);
+        }
+
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a0a0a0%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px top 50%;
+            background-size: 10px auto;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 15px rgba(124, 77, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 20px rgba(124, 77, 255, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-danger {
+            background-color: rgba(255, 82, 82, 0.1);
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+        }
+
+        /* --- Details Section Styles --- */
+        .details-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .details-section-title {
+            grid-column: 1 / -1;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .detail-item {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.2s;
+        }
+
+        .detail-item:hover {
+            border-color: rgba(124, 77, 255, 0.3);
+            background-color: rgba(28, 30, 38, 0.8);
+        }
+
+        .detail-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .detail-data {
+            font-weight: 600;
+            color: var(--text-main);
+            text-align: right;
+        }
+
+        .edit-btn-theme {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(124, 77, 255, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 30px;
+            transition: transform 0.2s;
+        }
+
+        .edit-btn-theme:hover {
+            transform: translateY(-2px);
+        }
+
+        /* --- Voters Section --- */
+        .voter-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .voter-tab-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 10px 24px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        .voter-tab-btn.active {
+            background: var(--primary-gradient);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* Request Cards */
+        .requests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .voter-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 25px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .voter-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .voter-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background-color: var(--primary-color);
+            opacity: 0;
+            transition: 0.2s;
+        }
+
+        .voter-card:hover::before {
+            opacity: 1;
+        }
+
+        .vc-info h4 {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            margin-bottom: 5px;
+        }
+
+        .vc-info p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .vc-icon {
+            color: var(--border-color);
+            font-size: 1.2rem;
+            transition: 0.2s;
+        }
+
+        .voter-card:hover .vc-icon {
+            color: var(--primary-color);
+        }
+
+        /* Eligible Table */
+        .table-container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            white-space: nowrap;
+        }
+
+        thead {
+            background-color: var(--input-bg);
+        }
+
+        th {
+            text-align: left;
+            padding: 16px 20px;
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        tbody tr:hover {
+            background-color: rgba(124, 77, 255, 0.05);
+        }
+
+        /* --- Voter Detail Modal --- */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 500px;
+            border-radius: 16px;
+            padding: 0;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            padding: 20px 25px;
+            background: rgba(124, 77, 255, 0.1);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .modal-body {
+            padding: 25px;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-transform: capitalize;
+        }
+
+        .info-value {
+            font-weight: 500;
+            text-align: right;
+            color: var(--text-main);
+        }
+
+        /* Modal Action Bar */
+        .modal-actions-bar {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.03);
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .action-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: white;
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-approve {
+            background-color: var(--success-color);
+            box-shadow: 0 4px 15px rgba(0, 230, 118, 0.4);
+        }
+
+        .btn-reject {
+            background-color: var(--error-color);
+            box-shadow: 0 4px 15px rgba(255, 82, 82, 0.4);
+        }
+
+        .action-btn:hover {
+            transform: scale(1.15);
+        }
+
+        /* --- Officer Styles --- */
+        .officer-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .add-officer-btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(124, 77, 255, 0.3);
+            white-space: nowrap;
+        }
+
+        .add-officer-btn:hover {
+            box-shadow: 0 6px 20px rgba(124, 77, 255, 0.5);
+        }
+
+        .edit-input {
+            background-color: var(--bg-color);
+            border: 1px solid var(--primary-color);
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            width: 100%;
+            outline: none;
+        }
+
+        /* Fullscreen Officer Modal */
+        #officer-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            z-index: 3000;
+            display: none;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .form-header {
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-container {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px 20px;
+            flex-grow: 1;
+        }
+
+        .section-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            border-left: 3px solid var(--primary-color);
+            padding-left: 10px;
+            font-weight: 700;
+        }
+
+        .id-display-wrapper {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .id-display {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--primary-color);
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 12px;
+            border-radius: 12px;
+            flex-grow: 1;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .copy-btn {
+            background-color: var(--border-color);
+            color: var(--text-main);
+            border: none;
+            padding: 0 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .copy-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            margin-top: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(124, 77, 255, 0.3);
+            transition: 0.2s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124, 77, 255, 0.4);
+        }
+
+        /* --- Edit Details Modal --- */
+        #editModal .modal-content {
+            padding: 30px;
+            border-top: 4px solid var(--primary-color);
+        }
+
+        #editModal .form-control {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        #editModal .btn-save {
+            width: 100%;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* --- Toast --- */
+        .toast {
+            position: fixed;
+            bottom: 90px;
+            /* Raised above bottom nav */
+            right: 30px;
+            background-color: var(--card-bg);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 4000;
+            border-left: 4px solid var(--primary-color);
+            font-weight: 500;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* --- Empty States --- */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        /* --- Alert Animation for Requests --- */
+        @keyframes alertPulse {
+            0% {
+                background-color: transparent;
+                border-color: var(--border-color);
+                color: var(--text-muted);
+            }
+
+            50% {
+                background-color: rgba(255, 82, 82, 0.15);
+                border-color: var(--error-color);
+                color: var(--error-color);
+            }
+
+            100% {
+                background-color: transparent;
+                border-color: var(--border-color);
+                color: var(--text-muted);
+            }
+        }
+
+        .alert-active {
+            animation: alertPulse 1.5s infinite;
+            font-weight: 600;
+            border-color: var(--error-color) !important;
+        }
+
+        /* --- BOOTH SPECIFIC STYLES --- */
+        .booth-status-badge {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background-color: rgba(0, 230, 118, 0.15);
+            color: var(--success-color);
+        }
+
+        .status-inactive {
+            background-color: rgba(255, 82, 82, 0.15);
+            color: var(--error-color);
+        }
+
+        .status-idle {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+        }
+
+        .booth-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 25px;
+            border-radius: 16px;
+            position: relative;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        .booth-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .booth-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--primary-color);
+            border-top-left-radius: 16px;
+            border-bottom-left-radius: 16px;
+        }
+
+        .booth-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.1);
+            position: absolute;
+            right: 20px;
+            top: 10px;
+            line-height: 1;
+        }
+
+        .booth-info {
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .booth-info h4 {
+            font-size: 1.2rem;
+            color: var(--text-main);
+            margin-bottom: 5px;
+        }
+
+        .booth-info p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .booth-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* --- RESULT PAGE SPECIFIC STYLES (ADDED FROM SNIPPET) --- */
+        .result-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            background: var(--input-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-group label {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .countdown-display {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-left: auto;
+        }
+
+        .winner-card {
+            background: linear-gradient(135deg, rgba(124, 77, 255, 0.1), rgba(0, 230, 118, 0.1));
+            border: 2px solid var(--success-color);
+            text-align: center;
+            padding: 40px;
+            margin-bottom: 30px;
+            border-radius: 20px;
+        }
+
+        .winner-avatar {
+            width: 80px;
+            height: 80px;
+            background: var(--success-color);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #000;
+        }
+
+        .winner-name {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 5px;
+        }
+
+        .winner-party {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .winner-votes {
+            font-size: 1.5rem;
+            color: var(--success-color);
+            font-weight: 700;
+            margin-top: 15px;
+        }
+
+        /* CSS Charts */
+        .chart-container {
+            height: 250px;
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            padding: 20px 0;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            height: 100%;
+        }
+
+        .bar {
+            width: 40px;
+            background: var(--primary-gradient);
+            border-radius: 5px 5px 0 0;
+            transition: height 1s ease;
+            position: relative;
+            min-height: 2px;
+        }
+
+        .bar:hover {
+            filter: brightness(1.2);
+        }
+
+        .bar-label {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .pie-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .pie-chart {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: conic-gradient(var(--border-color) 0% 100%);
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .pie-hole {
+            width: 140px;
+            height: 140px;
+            background: var(--card-bg);
+            border-radius: 50%;
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .pie-legend div {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .text-green {
+            color: var(--success-color);
+        }
+
+        .text-red {
+            color: var(--error-color);
+        }
+
+        /* --- MOBILE BOTTOM NAVIGATION (NEW) --- */
+        .bottom-nav {
+            display: none;
+            /* Hidden on desktop */
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 65px;
+            background-color: var(--sidebar-bg);
+            border-top: 1px solid var(--border-color);
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-icon {
+            color: var(--text-muted);
+            font-size: 1.4rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .nav-icon i {
+            margin-bottom: 4px;
+            transition: transform 0.2s;
+        }
+
+        .nav-icon.active {
+            color: var(--primary-color);
+        }
+
+        .nav-icon.active i {
+            transform: translateY(-2px);
+            text-shadow: 0 0 8px rgba(124, 77, 255, 0.6);
+        }
+
+        /* Active Indicator Line */
+        .nav-icon.active::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 40%;
+            height: 3px;
+            background-color: var(--primary-color);
+            border-radius: 0 0 4px 4px;
+        }
+
+        /* --- MOBILE RESPONSIVENESS --- */
+        .mobile-toggle {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+                height: 100vh;
+                z-index: 1001;
+                /* Above bottom nav */
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+                width: 280px;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                padding: 20px;
+                padding-bottom: 85px;
+                /* Add padding so content isn't hidden behind bottom nav */
+            }
+
+            .bottom-nav {
+                display: flex;
+            }
+
+            .header h2 {
+                font-size: 1.4rem;
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-header,
+            .form-container {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+
+            .result-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .countdown-display {
+                margin: 15px 0 0 0;
+                text-align: center;
+            }
+
+            .pie-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Hide old toggle */
+            .mobile-toggle {
+                display: none !important;
+            }
+
+            /* Adjust Toast for mobile */
+            .toast {
+                bottom: 80px;
+                left: 50%;
+                transform: translateX(-50%) translateY(100px);
+                width: 90%;
+                right: auto;
+            }
+
+            .toast.show {
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Full Screen Loader -->
+    <div id="fullLoader">
+        <div class="spinner"></div>
+        <p style="color: var(--text-muted); font-size: 1.1rem;">Verifying Session...</p>
+    </div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="brand"><i class="fa-solid fa-layer-group"></i> <span>Admin</span></div>
+        <ul class="nav-links">
+            <li class="nav-item active" onclick="switchTab('dashboard', this)"><i class="fa-solid fa-chart-pie"></i>
+                Dashboard</li>
+            <li class="nav-item" onclick="switchTab('details', this)"><i class="fa-solid fa-file-pen"></i> Details</li>
+            <li class="nav-item" onclick="switchTab('voters', this)"><i class="fa-solid fa-users"></i> Voters</li>
+            <li class="nav-item" onclick="switchTab('officers', this)"><i class="fa-solid fa-user-tie"></i> Officers
+            </li>
+            <li class="nav-item" onclick="switchTab('booths', this)"><i class="fa-solid fa-store"></i> Booths</li>
+            <li class="nav-item" onclick="switchTab('results', this)"><i class="fa-solid fa-poll"></i> Results</li>
+        </ul>
+        <button class="sidebar-logout" onclick="openLogoutModal()"><i class="fa-solid fa-right-from-bracket"></i>
+            Logout</button>
+        <div class="user-profile">
+            <div class="avatar" id="sidebarAvatar">A</div>
+            <div>
+                <div style="font-weight: 600; font-size: 0.9rem;" id="sidebarUsername">Admin</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Admin</div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <div class="header">
+            <h2 id="pageTitle">Dashboard</h2>
+        </div>
+
+        <!-- Tab: Dashboard (UPDATED) -->
+        <div id="dashboard" class="tab-content active">
+
+            <!-- New Full Width Cards -->
+            <div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 20px;">
+                <!-- Election Title Card -->
+                <div class="hero-card">
+                    <div class="hero-label">Election Title</div>
+                    <div class="hero-title-text" id="dashTitle">--</div>
+                </div>
+
+                <!-- Institution Name Card -->
+                <div class="hero-card">
+                    <div class="hero-label">Institution</div>
+                    <div class="hero-subtitle-text" id="dashInstitution">--</div>
+                </div>
+            </div>
+
+            <!-- Existing 4 Cards Grid -->
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-title">Election ID</div>
+                    <div class="stat-row">
+                        <div class="stat-value " id="dashId" style="color: #4ee7db;">--</div>
+                        <button class="icon-btn" onclick="window.copyElectionId()" title="Copy Election ID">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-title">Institution Code</div>
+                    <div class="stat-value" id="dashCode">--</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-title">Election Date</div>
+                    <div class="stat-value" id="dashDate">--</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-title">Status</div>
+                    <div class="stat-value" style="color: var(--success-color);">Active</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Details (UPDATED) -->
+        <div id="details" class="tab-content">
+            <!-- Container for all details including schedule -->
+            <div class="details-container" id="fullDetailsContainer">
+                <!-- Injected via JS -->
+            </div>
+
+            <button class="edit-btn-theme" onclick="openEditModal()">
+                <i class="fa-solid fa-pen-to-square"></i> Edit Details
+            </button>
+        </div>
+
+        <!-- Tab: Voters (UPDATED WITH MODULAR TABS) -->
+        <div id="voters" class="tab-content">
+            <div class="header" style="margin-bottom: 20px;">
+                <!-- Removed title here to rely on global header -->
+            </div>
+
+            <!-- Modular Navigation -->
+            <div class="voter-tabs">
+                <button class="voter-tab-btn active" id="tabEligible" onclick="toggleVoterView('eligible')">
+                    <i class="fa-solid fa-user-check"></i> Eligible Voters
+                </button>
+                <button class="voter-tab-btn" id="tabRequests" onclick="toggleVoterView('pending')">
+                    <i class="fa-solid fa-user-clock"></i> Requests
+                </button>
+            </div>
+
+            <!-- View 1: Eligible Voters (Table) - Default Visible -->
+            <div id="viewEligible">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Voter ID</th>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Institution</th>
+                                <th>ID No (Adm/Roll)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eligibleTableBody">
+                            <!-- Rows injected here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="noEligibleMsg" class="empty-state" style="display: none;">
+                    No eligible voters yet.
+                </div>
+            </div>
+
+            <!-- View 2: Pending Requests (Cards) - Default Hidden -->
+            <div id="viewPending" style="display: none;">
+                <div id="requestsGrid" class="requests-grid">
+                    <!-- Cards injected here -->
+                </div>
+                <div id="noRequestsMsg" class="empty-state" style="display: none;">
+                    No pending requests found.
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Officers -->
+        <div id="officers" class="tab-content">
+            <div class="officer-toolbar">
+                <div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 5px;">Double-click fields to
+                        edit. Click copy icon to get login credentials.</p>
+                </div>
+                <button class="add-officer-btn" id="openAddOfficerBtn"><i class="fa-solid fa-user-plus"></i> Add
+                    Officer</button>
+            </div>
+            <div class="table-container">
+                <table id="officerTable">
+                    <thead>
+                        <tr>
+                            <th>Actions</th>
+                            <th>Officer ID</th>
+                            <th>Name</th>
+                            <th>Username</th>
+                            <th>Password</th>
+                            <th>Dept</th>
+                            <th>Booth No.</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                        </tr>
+                    </thead>
+                    <tbody id="officerTableBody"></tbody>
+                </table>
+                <div id="emptyState" style="padding: 40px; text-align:center; color: var(--text-muted); display:none;">
+                    No officers added yet.</div>
+            </div>
+        </div>
+
+        <!-- NEW: Tab: Booths -->
+        <div id="booths" class="tab-content">
+            <button class="edit-btn-theme" onclick="openlive()">
+                Live Poll <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </button><br>
+            <script>
+                function openlive() {
+                    // 1. Retrieve the Election ID from session storage (already set by login/officer page)
+                    const electionId = sessionStorage.getItem('currentElectionId');
+
+                    // 2. Check if ID exists to prevent opening an empty page
+                    if (!electionId) {
+                        alert("Election ID not found. Please ensure you are logged in.");
+                        return;
+                    }
+
+                    // 3. Redirect to live.html in a new blank tab/window
+                    window.open('live.html', '_blank');
+                }
+            </script>
+            <div class="officer-toolbar">
+                <div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 5px;">Live status of booths
+                        launched by assigned officers.</p>
+                </div>
+            </div>
+
+            <div id="boothsGrid" class="requests-grid">
+                <!-- Booth Cards Injected Here -->
+            </div>
+            <div id="noBoothsMsg" class="empty-state" style="display: none;">
+                No officers assigned to booths yet.
+            </div>
+        </div>
+
+        <!-- Tab: Results (UPDATED FROM SNIPPET) -->
+        <div id="results" class="tab-content">
+            <!-- NEW: Redirect to Public Page -->
+            <div style="text-align: right; margin-bottom: 20px;">
+                <button class="btn btn-secondary" onclick="goToResultPage()">
+                    <i class="fa-solid fa-external-link-alt"></i> Open Public Result Page
+                </button>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="card" id="resultControls"
+                style="background-color: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+                <h3
+                    style="color: var(--primary-color); margin-bottom: 20px; font-weight: 600; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                    Publication Controls</h3>
+                <div class="result-controls">
+                    <div class="control-group">
+                        <label>Schedule Result Release</label>
+                        <input type="datetime-local" id="scheduleInput" class="form-control">
+                    </div>
+                    <button class="btn btn-secondary" id="btnSchedule"><i class="fa-regular fa-clock"></i> Set
+                        Schedule</button>
+                    <button class="btn btn-primary" id="btnPublishNow"><i class="fa-solid fa-bullhorn"></i> Publish
+                        Now</button>
+                    <div id="countdownTimer" class="countdown-display" style="display:none;"></div>
+                </div>
+                <div id="publishStatus" style="margin-top:10px; font-size: 0.9rem; color: var(--text-muted);">Status:
+                    Draft</div>
+            </div>
+
+            <!-- Live Results (Hidden until published or admin preview) -->
+            <div id="liveResultsArea" style="display:none;">
+
+                <!-- Polling Stats -->
+                <div class="card"
+                    style="background-color: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+                    <h3
+                        style="color: var(--primary-color); margin-bottom: 20px; font-weight: 600; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                        <i class="fa-solid fa-chart-line"></i> Polling Statistics
+                    </h3>
+                    <div class="dashboard-grid">
+                        <div class="stat-card">
+                            <div class="stat-title">Eligible Voters</div>
+                            <div class="stat-value" id="statEligible">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">Votes Cast</div>
+                            <div class="stat-value" id="statVoted">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">Turnout</div>
+                            <div class="stat-value" id="statTurnout" style="color:var(--primary-color)">0%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Winner Section -->
+                <div class="winner-card" id="winnerSection">
+                    <div class="winner-avatar"><i class="fa-solid fa-trophy"></i></div>
+                    <div class="winner-name" id="winnerName">Calculating...</div>
+                    <div class="winner-party" id="winnerParty">--</div>
+                    <div class="winner-votes" id="winnerVotes">0 Votes</div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="card"
+                    style="background-color: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+                    <h3
+                        style="color: var(--primary-color); margin-bottom: 20px; font-weight: 600; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                        Vote Distribution</h3>
+                    <div class="chart-container" id="barChartContainer">
+                        <!-- Bars injected by JS -->
+                    </div>
+                </div>
+
+                <div class="card"
+                    style="background-color: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+                    <h3
+                        style="color: var(--primary-color); margin-bottom: 20px; font-weight: 600; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                        Vote Share</h3>
+                    <div class="pie-grid">
+                        <div class="pie-chart" id="pieChart"></div>
+                        <div class="pie-legend" id="pieLegend"></div>
+                    </div>
+                </div>
+
+                <!-- Detailed List -->
+                <div class="card"
+                    style="background-color: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+                    <h3
+                        style="color: var(--primary-color); margin-bottom: 20px; font-weight: 600; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                        Candidate Standings</h3>
+                    <div class="table-container">
+                        <table id="candidateTable">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Candidate</th>
+                                    <th>Party</th>
+                                    <th>Votes (Firebase)</th>
+                                    <th>Votes (Blockchain)</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Blockchain Comparison -->
+                <div class="card"
+                    style="background-color: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+                    <h3
+                        style="color: var(--primary-color); margin-bottom: 20px; font-weight: 600; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                        <i class="fa-solid fa-link"></i> Blockchain Integrity Check
+                    </h3>
+                    <p style="color:var(--text-muted); margin-bottom:15px; font-size:0.9rem;">Comparing Firebase
+                        transaction counts vs Local Ledger Hashes.</p>
+                    <div class="table-container">
+                        <table id="integrityTable">
+                            <thead>
+                                <tr>
+                                    <th>Candidate</th>
+                                    <th>Firebase Count</th>
+                                    <th>Blockchain Count</th>
+                                    <th>Match</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="noResultsMsg" class="card"
+                style="text-align:center; padding:40px; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px;">
+                <i class="fa-solid fa-lock" style="font-size:3rem; color:var(--border-color); margin-bottom:20px;"></i>
+                <h3>Results Not Published</h3>
+                <p style="color:var(--text-muted);">Schedule a time or publish manually to view results.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- NEW: Mobile Bottom Navigation -->
+    <div class="bottom-nav">
+        <!-- Dashboard -->
+        <div class="nav-icon active" data-target="dashboard" onclick="handleMobileNavClick('dashboard', this)">
+            <i class="fa-solid fa-chart-pie"></i>
+        </div>
+        <!-- Voters -->
+        <div class="nav-icon" data-target="voters" onclick="handleMobileNavClick('voters', this)">
+            <i class="fa-solid fa-users"></i>
+        </div>
+        <!-- Officers -->
+        <div class="nav-icon" data-target="officers" onclick="handleMobileNavClick('officers', this)">
+            <i class="fa-solid fa-user-tie"></i>
+        </div>
+        <!-- Others (Details, Booths, Results) -->
+        <div class="nav-icon" data-target="others" onclick="toggleMobileSidebar(this)">
+            <i class="fa-solid fa-grip"></i>
+        </div>
+    </div>
+
+    <!-- VOTER DETAIL MODAL -->
+    <div id="voterDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Voter Request Details</h3>
+                <button class="icon-btn" onclick="closeVoterModal()"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="modal-body" id="voterModalBody">
+                <!-- Content injected via JS -->
+            </div>
+            <!-- Action Bar -->
+            <div class="modal-actions-bar">
+                <button class="action-btn btn-reject" onclick="processVoterAction('reject')" title="Reject Request">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <button class="action-btn btn-approve" onclick="processVoterAction('accept')" title="Approve Request">
+                    <i class="fa-solid fa-check"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Officer Modal -->
+    <div id="officer-modal">
+        <div class="form-header">
+            <h3>Add New Officer</h3>
+            <button class="icon-btn" id="closeOfficerModalBtn"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="form-container">
+            <div class="section-title">Identity</div>
+            <div style="margin-bottom: 20px;">
+                <label style="display:block; margin-bottom:8px; color:var(--text-muted)">Officer ID</label>
+                <div class="id-display-wrapper">
+                    <div id="officerIdDisplay" class="id-display">LOAD...</div>
+                    <button class="copy-btn" id="copyOfficerIdBtn"><i class="fa-regular fa-copy"></i></button>
+                </div>
+            </div>
+            <div class="section-title">Credentials</div>
+            <input type="text" id="offName" class="form-control" placeholder="Full Name">
+            <input type="text" id="offUsername" class="form-control" placeholder="Username">
+            <input type="text" id="offPassword" class="form-control" placeholder="Password">
+            <div class="section-title">Assignment</div>
+            <input type="text" id="offDept" class="form-control" placeholder="Department">
+            <input type="number" id="offBooth" class="form-control" placeholder="Booth Number (e.g. 1)">
+            <p id="boothError"
+                style="color:var(--error-color); font-size:0.8rem; display:none; margin-top:-10px; margin-bottom:15px;">
+                Invalid Booth Number.</p>
+            <div class="section-title">Contact</div>
+            <input type="email" id="offEmail" class="form-control" placeholder="Email">
+            <input type="tel" id="offPhone" class="form-control" placeholder="Phone">
+            <button class="submit-btn" id="saveOfficerBtn">Save Officer</button>
+        </div>
+    </div>
+
+    <!-- Edit Details Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Election Details</h3>
+                <button class="icon-btn" onclick="document.getElementById('editModal').style.display='none'"><i
+                        class="fa-solid fa-times"></i></button>
+            </div>
+            <div style="margin-bottom:15px"><label class="info-label">Admin Username</label><input type="text"
+                    id="editUser" class="form-control"></div>
+            <div style="margin-bottom:15px"><label class="info-label">Admin Password</label><input type="text"
+                    id="editPass" class="form-control"></div>
+            <div style="margin-bottom:15px"><label class="info-label">Email</label><input type="email" id="editEmail"
+                    class="form-control"></div>
+            <button class="btn-save" onclick="saveElectionDetails()">Save Changes</button>
+        </div>
+    </div>
+
+    <!-- Logout Modal -->
+    <div id="logoutModal" class="modal">
+        <div class="modal-content" style="text-align:center; padding-top: 40px; padding-bottom: 40px;">
+            <div
+                style="width: 60px; height: 60px; background: rgba(255,82,82,0.1); border-radius: 50%; display:flex; align-items:center; justify-content:center; margin: 0 auto 20px auto;">
+                <i class="fa-solid fa-power-off" style="font-size: 1.5rem; color: var(--error-color);"></i>
+            </div>
+            <h3 style="margin-bottom: 10px;">Logout?</h3>
+            <p style="margin:0 0 30px 0; color:var(--text-muted)">Are you sure you want to logout?</p>
+            <div style="display:flex; gap:15px; justify-content:center">
+                <button class="btn btn-secondary"
+                    onclick="document.getElementById('logoutModal').style.display='none'">Cancel</button>
+                <button class="btn btn-primary" style="background-color: var(--error-color); color: white;"
+                    onclick="confirmLogout()">Yes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"><i class="fa-solid fa-circle-check"></i> <span id="toastMsg">Saved</span></div>
+
+    <!-- Main Page Script -->
+    <script type="module">
+        import { ref, get, set, update, remove, push, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        const dbb = window.firebaseDB;
+        let electionData = null;
+        let officers = [];
+        let booths = [];
+        let countdownInterval = null;
+
+        // --- 1. INIT & DASHBOARD ---
+        async function init() {
+            const eid = sessionStorage.getItem('currentElectionId') || localStorage.getItem('currentElectionId');
+            if (!eid) return window.location.href = 'login.html';
+
+            try {
+                const snap = await get(ref(dbb, `elections/${eid}`));
+                if (snap.exists()) {
+                    electionData = snap.val();
+                    electionData.electionId = eid; // Ensure ID is in data object
+
+                    // Loading Animation: Fade out
+                    document.getElementById('fullLoader').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('fullLoader').style.display = 'none';
+                    }, 500);
+
+                    document.getElementById('sidebar').style.display = 'flex';
+                    document.getElementById('mainContent').style.display = 'block';
+                    updateDashboard();
+                    renderFullDetails();
+                    initResultsLogic(); // Initialize Results Logic
+                } else {
+                    alert('Election not found'); window.location.href = 'login.html';
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function updateDashboard() {
+            // 1. Title
+            document.getElementById('dashTitle').innerText = electionData.title || 'Untitled Election';
+
+            // 2. Institution Name
+            const instName = electionData.type === 'school' ? electionData.schoolName : electionData.collegeName;
+            document.getElementById('dashInstitution').innerText = instName || '--';
+
+            // 3. Existing Data
+            document.getElementById('dashId').innerText = electionData.electionId;
+            document.getElementById('sidebarUsername').innerText = electionData.admin.username;
+
+            const code = electionData.type === 'school' ? electionData.schoolCode : electionData.collegeCode;
+            document.getElementById('dashCode').innerText = code;
+
+            // 4. Date Format (DD/MM/YYYY)
+            const rawDate = electionData.schedule?.date; // Format usually YYYY-MM-DD
+            if (rawDate) {
+                const [y, m, d] = rawDate.split('-');
+                document.getElementById('dashDate').innerText = `${d}/${m}/${y}`;
+            } else {
+                document.getElementById('dashDate').innerText = 'N/A';
+            }
+        }
+
+        // --- 2. FULL DETAILS RENDERING (UPDATED) ---
+        function renderFullDetails() {
+            const container = document.getElementById('fullDetailsContainer');
+            container.innerHTML = '';
+
+            // Helper to create section header
+            const createHeader = (text) => {
+                const h = document.createElement('div');
+                h.className = 'details-section-title';
+                h.innerText = text;
+                return h;
+            };
+
+            // Helper to create item
+            const createItem = (label, value) => {
+                const div = document.createElement('div');
+                div.className = 'detail-item';
+                div.innerHTML = `<span class="detail-label">${label}</span><span class="detail-data">${value || '-'}</span>`;
+                return div;
+            };
+
+            // 1. General Info
+            container.appendChild(createHeader('General Information'));
+            container.appendChild(createItem('Election Title', electionData.title)); // ADDED TITLE
+            container.appendChild(createItem('Election ID', electionData.electionId));
+            container.appendChild(createItem('Type', electionData.type));
+            container.appendChild(createItem('Status', 'Active'));
+
+            // 2. Admin Info
+            container.appendChild(createHeader('Administrator'));
+            container.appendChild(createItem('Username', electionData.admin?.username));
+            container.appendChild(createItem('Email', electionData.admin?.email));
+            container.appendChild(createItem('Password', electionData.admin?.password));
+
+            // 3. Institution Info
+            container.appendChild(createHeader('Institution Details'));
+            if (electionData.type === 'school') {
+                container.appendChild(createItem('School Name', electionData.schoolName));
+                container.appendChild(createItem('School Code', electionData.schoolCode));
+            } else {
+                container.appendChild(createItem('College Name', electionData.collegeName));
+                container.appendChild(createItem('College Code', electionData.collegeCode));
+                container.appendChild(createItem('University', electionData.university));
+            }
+
+            // 4. Schedule Details
+            container.appendChild(createHeader('Schedule & Timing'));
+            if (electionData.schedule) {
+                // Use same date format logic as dashboard
+                const rawDate = electionData.schedule.date;
+                let dispDate = rawDate;
+                if (rawDate) {
+                    const [y, m, d] = rawDate.split('-');
+                    dispDate = `${d}/${m}/${y}`;
+                }
+                container.appendChild(createItem('Date', dispDate));
+                container.appendChild(createItem('Start Time', electionData.schedule.startTime));
+            } else {
+                container.appendChild(createItem('Schedule', 'Not Set'));
+            }
+        }
+
+        // --- 3. VOTER LOGIC (UPDATED DEFAULT VIEW) ---
+        let selectedVoterId = null;
+        let selectedVoterData = null;
+
+        // Toggle between Eligible and Requests
+        window.toggleVoterView = async (view) => {
+            const btnReq = document.getElementById('tabRequests');
+            const btnElig = document.getElementById('tabEligible');
+            const viewReq = document.getElementById('viewPending');
+            const viewElig = document.getElementById('viewEligible');
+
+            if (view === 'eligible') {
+                // Activate Eligible Tab
+                btnElig.classList.add('active');
+                btnReq.classList.remove('active', 'alert-active'); // remove alert when active to see clean UI
+
+                viewElig.style.display = 'block';
+                viewReq.style.display = 'none';
+
+                await loadEligibleVoters();
+            } else {
+                // Activate Requests Tab
+                btnReq.classList.add('active');
+                btnElig.classList.remove('active');
+
+                viewReq.style.display = 'block';
+                viewElig.style.display = 'none';
+
+                await loadVoterRequests();
+            }
+        };
+
+        // Check for new requests and set blinking alert
+        async function checkRequestAlert() {
+            const btnReq = document.getElementById('tabRequests');
+            try {
+                const snap = await get(ref(dbb, `elections/${electionData.electionId}/requests`));
+                if (snap.exists()) {
+                    const reqs = snap.val();
+                    const count = Object.keys(reqs).length;
+                    if (count > 0 && !btnReq.classList.contains('active')) {
+                        btnReq.classList.add('alert-active');
+                    } else {
+                        btnReq.classList.remove('alert-active');
+                    }
+                } else {
+                    btnReq.classList.remove('alert-active');
+                }
+            } catch (e) {
+                console.error(e);
+                btnReq.classList.remove('alert-active');
+            }
+        }
+
+        // Load Pending Requests as Cards
+        window.loadVoterRequests = async () => {
+            const electionId = electionData.electionId;
+            const grid = document.getElementById('requestsGrid');
+            grid.innerHTML = '';
+
+            try {
+                const snap = await get(ref(dbb, `elections/${electionId}/requests`));
+                if (snap.exists()) {
+                    const reqs = snap.val();
+                    let count = 0;
+                    Object.entries(reqs).forEach(([vid, data]) => {
+                        count++;
+                        const card = document.createElement('div');
+                        card.className = 'voter-card';
+                        card.innerHTML = `
+                            <div class="vc-info">
+                                <h4>${vid}</h4>
+                                <p>${data.voterName || 'Loading Name...'}</p>
+                            </div>
+                            <i class="fa-solid fa-chevron-right vc-icon"></i>
+                        `;
+                        card.onclick = () => openVoterModal(vid);
+                        grid.appendChild(card);
+                    });
+                    document.getElementById('noRequestsMsg').style.display = count ? 'none' : 'block';
+                } else {
+                    document.getElementById('noRequestsMsg').style.display = 'block';
+                }
+                // Update alert status whenever we load requests
+                checkRequestAlert();
+            } catch (e) { console.error(e); }
+        };
+
+        // Load Eligible Voters as Table
+        window.loadEligibleVoters = async () => {
+            const electionId = electionData.electionId;
+            const tbody = document.getElementById('eligibleTableBody');
+            tbody.innerHTML = '';
+
+            try {
+                const snap = await get(ref(dbb, `elections/${electionId}/eligible`));
+                if (snap.exists()) {
+                    const list = snap.val();
+                    let count = 0;
+                    for (const vid in list) {
+                        const detailSnap = await get(ref(dbb, `voters/${vid}`));
+                        const details = detailSnap.exists() ? detailSnap.val() : {};
+                        const inst = details.collegeCode || details.schoolCode || '-';
+                        const adm = details.admNo || details.rollNo || '-';
+
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${vid}</td><td>${list[vid].name || details.name}</td><td>${details.type}</td><td>${inst}</td><td>${adm}</td>`;
+                        tbody.appendChild(row);
+                        count++;
+                    }
+                    document.getElementById('noEligibleMsg').style.display = count ? 'none' : 'block';
+                } else {
+                    document.getElementById('noEligibleMsg').style.display = 'block';
+                }
+            } catch (e) { console.error(e); }
+        };
+
+        // Open Detail Modal
+        window.openVoterModal = async (vid) => {
+            selectedVoterId = vid;
+            const modal = document.getElementById('voterDetailModal');
+            const body = document.getElementById('voterModalBody');
+            body.innerHTML = '<div style="text-align:center; padding:20px;">Loading...</div>';
+            modal.style.display = 'flex';
+
+            try {
+                const snap = await get(ref(dbb, `voters/${vid}`));
+                if (snap.exists()) {
+                    selectedVoterData = snap.val();
+                    let html = '';
+                    // Filter out sensitive keys
+                    const ignoreKeys = ['password', 'timestamp', 'approvedElections', 'requestsSent', 'appear'];
+
+                    for (const [key, value] of Object.entries(selectedVoterData)) {
+                        if (ignoreKeys.includes(key)) continue;
+                        const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                        html += `<div class="info-row"><span class="info-label">${label}</span><span class="info-value">${value}</span></div>`;
+                    }
+                    body.innerHTML = html;
+                } else {
+                    body.innerHTML = 'Voter details not found.';
+                }
+            } catch (e) { body.innerHTML = 'Error loading details.'; }
+        };
+
+        window.closeVoterModal = () => document.getElementById('voterDetailModal').style.display = 'none';
+
+        // PROCESS ACTION: Accept/Reject
+        window.processVoterAction = async (action) => {
+            const electionId = electionData.electionId;
+            if (!electionId || !selectedVoterId) return;
+
+            try {
+                if (action === 'accept') {
+                    // 1. Add to Eligible in Election Node
+                    await set(ref(dbb, `elections/${electionId}/eligible/${selectedVoterId}`), {
+                        name: selectedVoterData.name,
+                        type: selectedVoterData.type,
+                        timestamp: Date.now()
+                    });
+
+                    // 2. Add 'appear' collection in Voter Node (User Requested)
+                    await set(ref(dbb, `voters/${selectedVoterId}/appear/${electionId}`), true);
+
+                    window.showToast('Voter Approved & Added to List');
+                } else {
+                    window.showToast('Voter Request Rejected');
+                }
+
+                // 3. Remove from Requests (Election Node)
+                await remove(ref(dbb, `elections/${electionId}/requests/${selectedVoterId}`));
+
+                // 4. Remove from RequestsSent (Voter Node)
+                await remove(ref(dbb, `voters/${selectedVoterId}/requestsSent/${electionId}`));
+
+                window.closeVoterModal();
+                // Refresh the list (stays on pending view)
+                loadVoterRequests();
+            } catch (e) { console.error(e); window.showToast('Action Failed', 'error'); }
+        };
+
+        // --- 4. OFFICER LOGIC (UPDATED COPY BUTTON) ---
+        const openAddOfficerBtn = document.getElementById('openAddOfficerBtn');
+        const officerModal = document.getElementById('officer-modal');
+        const closeOfficerModalBtn = document.getElementById('closeOfficerModalBtn');
+        const saveOfficerBtn = document.getElementById('saveOfficerBtn');
+        const officerTableBody = document.getElementById('officerTableBody');
+
+        function generateOfficerId() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let res = '';
+            for (let i = 0; i < 6; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
+            return res;
+        }
+
+        async function loadOfficers() {
+            try {
+                const snap = await get(ref(dbb, `elections/${electionData.electionId}/officers`));
+                if (snap.exists()) officers = Object.entries(snap.val()).map(([k, v]) => ({ id: k, ...v }));
+                else officers = [];
+                renderOfficers();
+            } catch (e) { console.error(e); }
+        }
+
+        function renderOfficers() {
+            officerTableBody.innerHTML = '';
+            document.getElementById('emptyState').style.display = officers.length ? 'none' : 'block';
+            officers.sort((a, b) => a.booth - b.booth).forEach(off => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <button class="icon-btn" onclick="navigator.clipboard.writeText('Election ID: ${electionData.electionId}\\nUsername: ${off.username}\\nPassword: ${off.password}').then(()=>window.showToast('Credentials Copied!', 'success'))"><i class="fa-regular fa-copy"></i></button>
+                        <button class="icon-btn" onclick="window.deleteOfficer('${off.id}')" title="Delete" style="color:#ff5252"><i class="fa-regular fa-trash-can"></i></button>
+                    </td>
+                    <td>${off.id}</td>
+                    <td class="editable" data-field="name" data-id="${off.id}">${off.name}</td>
+                    <td class="editable" data-field="username" data-id="${off.id}">${off.username}</td>
+                    <td class="editable" data-field="password" data-id="${off.id}">${off.password}</td>
+                    <td class="editable" data-field="dept" data-id="${off.id}">${off.dept}</td>
+                    <td class="editable" data-field="booth" data-id="${off.id}">${off.booth}</td>
+                    <td class="editable" data-field="email" data-id="${off.id}">${off.email}</td>
+                    <td class="editable" data-field="phone" data-id="${off.id}">${off.phone}</td>
+                `;
+                officerTableBody.appendChild(tr);
+            });
+            attachEditListeners();
+        }
+
+        function attachEditListeners() {
+            document.querySelectorAll('.editable').forEach(cell => {
+                cell.addEventListener('dblclick', function () {
+                    const field = this.dataset.field;
+                    const id = this.dataset.id;
+                    const val = this.innerText;
+                    const input = document.createElement('input');
+                    input.type = (field === 'booth' || field === 'phone') ? 'number' : 'text';
+                    input.value = val;
+                    input.className = 'edit-input';
+                    this.innerText = '';
+                    this.appendChild(input);
+                    input.focus();
+                    const done = async () => {
+                        const newVal = input.value.trim();
+                        if (field === 'booth' && (isNaN(newVal) || newVal < 1)) { renderOfficers(); return; }
+                        try {
+                            await update(ref(dbb, `elections/${electionData.electionId}/officers/${id}`), { [field]: newVal });
+                            await loadOfficers();
+                            window.showToast('Updated');
+                        } catch (e) { window.showToast('Error', 'error'); renderOfficers(); }
+                    };
+                    input.addEventListener('blur', done);
+                    input.addEventListener('keypress', e => { if (e.key === 'Enter') input.blur() });
+                });
+            });
+        }
+
+        window.deleteOfficer = async (id) => {
+            if (confirm('Delete this officer?')) {
+                await remove(ref(dbb, `elections/${electionData.electionId}/officers/${id}`));
+                await loadOfficers();
+            }
+        };
+
+        openAddOfficerBtn.addEventListener('click', () => {
+            document.getElementById('officerIdDisplay').innerText = generateOfficerId();
+            officerModal.style.display = 'flex';
+            const max = officers.length ? Math.max(...officers.map(o => o.booth)) : 0;
+            document.getElementById('offBooth').value = max + 1;
+        });
+        closeOfficerModalBtn.addEventListener('click', () => officerModal.style.display = 'none');
+
+        document.getElementById('copyOfficerIdBtn').addEventListener('click', () => {
+            navigator.clipboard.writeText(document.getElementById('officerIdDisplay').innerText).then(() => window.showToast('ID Copied', 'success'));
+        });
+
+        saveOfficerBtn.addEventListener('click', async () => {
+            const newId = document.getElementById('officerIdDisplay').innerText;
+            const data = {
+                name: document.getElementById('offName').value,
+                username: document.getElementById('offUsername').value,
+                password: document.getElementById('offPassword').value,
+                dept: document.getElementById('offDept').value,
+                booth: parseInt(document.getElementById('offBooth').value),
+                email: document.getElementById('offEmail').value,
+                phone: document.getElementById('offPhone').value
+            };
+            if (!data.name || !data.username || !data.booth) return window.showToast('Fill required fields', 'error');
+            // Basic booth validation
+            if (data.booth > 1 && !officers.some(o => o.booth === data.booth - 1)) return window.showToast('Invalid Booth Number', 'error');
+
+            try {
+                await set(ref(dbb, `elections/${electionData.electionId}/officers/${newId}`), data);
+                await loadOfficers();
+                officerModal.style.display = 'none';
+                window.showToast('Officer Added', 'success');
+                ['offName', 'offUsername', 'offPassword', 'offDept', 'offEmail', 'offPhone'].forEach(id => document.getElementById(id).value = '');
+            } catch (e) { window.showToast('Error adding officer', 'error'); }
+        });
+
+        // --- 5. BOOTH LOGIC (UPDATED TO FETCH FROM OFFICERS & LAUNCH STATUS) ---
+
+        // Load Booths based on Officers and their launch status
+        async function loadBooths() {
+            // First, ensure officers are loaded
+            if (officers.length === 0) await loadOfficers();
+
+            const grid = document.getElementById('boothsGrid');
+            const noMsg = document.getElementById('noBoothsMsg');
+            grid.innerHTML = '';
+
+            if (officers.length === 0) {
+                noMsg.style.display = 'block';
+                return;
+            }
+            noMsg.style.display = 'none';
+
+            // Fetch live booth statuses from the database
+            const boothStatusSnap = await get(ref(dbb, `elections/${electionData.electionId}/booths`));
+            const boothStatuses = boothStatusSnap.exists() ? boothStatusSnap.val() : {};
+
+            // Iterate through officers to build the list
+            officers.forEach(officer => {
+                const boothNum = officer.booth;
+                const officerName = officer.name;
+                const officerInitial = officerName.charAt(0).toUpperCase();
+
+                // Get live status for this specific booth number
+                const statusData = boothStatuses[boothNum];
+
+                let statusText = 'Not Launched';
+                let statusClass = 'status-idle';
+
+                if (statusData) {
+                    // Check online status using heartbeat logic from officer page
+                    const isOnline = (Date.now() - statusData.lastHeartbeat < 10000);
+
+                    if (isOnline) {
+                        statusText = 'Online';
+                        statusClass = 'status-active';
+                    } else {
+                        statusText = 'Offline';
+                        statusClass = 'status-inactive';
+                    }
+                }
+
+                const card = document.createElement('div');
+                card.className = 'booth-card';
+                card.innerHTML = `
+                    <div class="booth-number">#${boothNum}</div>
+                    <div class="booth-info">
+                        <h4>Booth ${boothNum}</h4>
+                        <div class="booth-status-badge ${statusClass}" style="display:inline-block; margin-bottom:10px;">${statusText}</div>
+                        <p><i class="fa-solid fa-user-shield" style="color:var(--primary-color)"></i> ${officerName}</p>
+                    </div>
+                    <div class="booth-actions">
+                        <!-- No actions needed, just status display -->
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- 6. RESULTS LOGIC (UPDATED FROM SNIPPET) ---
+        function initResultsLogic() {
+            const settingsRef = ref(dbb, `elections/${electionData.electionId}/settings`);
+
+            // Listen to settings (Published state & Schedule)
+            onValue(settingsRef, (snap) => {
+                const settings = snap.val() || {};
+                const isPublished = settings.resultsPublished || false;
+                const scheduledTime = settings.scheduledTime || 0;
+
+                updateResultControls(isPublished, scheduledTime);
+            });
+
+            // Button Listeners
+            document.getElementById('btnSchedule').addEventListener('click', setSchedule);
+            document.getElementById('btnPublishNow').addEventListener('click', () => publishResults(true));
+        }
+
+        function updateResultControls(isPublished, scheduledTime) {
+            const controls = document.getElementById('resultControls');
+            const timerDisplay = document.getElementById('countdownTimer');
+            const statusTxt = document.getElementById('publishStatus');
+            const resultsArea = document.getElementById('liveResultsArea');
+            const noResults = document.getElementById('noResultsMsg');
+
+            if (isPublished) {
+                // Published State
+                clearInterval(countdownInterval);
+                document.getElementById('btnPublishNow').style.display = 'none';
+                document.getElementById('btnSchedule').style.display = 'none';
+                timerDisplay.style.display = 'none';
+                statusTxt.innerText = 'Status: PUBLISHED';
+                statusTxt.style.color = 'var(--success-color)';
+
+                resultsArea.style.display = 'block';
+                noResults.style.display = 'none';
+
+                // Load Results Data
+                loadResultsData();
+            } else if (scheduledTime > Date.now()) {
+                // Scheduled State
+                resultsArea.style.display = 'none'; // Hide results until time
+                noResults.style.display = 'block';
+                document.getElementById('btnPublishNow').style.display = 'inline-flex'; // Allow override
+                document.getElementById('btnSchedule').style.display = 'inline-flex';
+                timerDisplay.style.display = 'block';
+                statusTxt.innerText = 'Status: Scheduled';
+
+                startCountdown(scheduledTime);
+            } else {
+                // Draft State
+                clearInterval(countdownInterval);
+                resultsArea.style.display = 'none';
+                noResults.style.display = 'block';
+                document.getElementById('btnPublishNow').style.display = 'inline-flex';
+                document.getElementById('btnSchedule').style.display = 'inline-flex';
+                timerDisplay.style.display = 'none';
+                statusTxt.innerText = 'Status: Draft';
+            }
+        }
+
+        function startCountdown(targetTime) {
+            if (countdownInterval) clearInterval(countdownInterval);
+
+            const updateTimer = () => {
+                const now = Date.now();
+                const diff = targetTime - now;
+
+                if (diff <= 0) {
+                    clearInterval(countdownInterval);
+                    publishResults(false); // Auto publish
+                    return;
+                }
+
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                document.getElementById('countdownTimer').innerText =
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            };
+
+            updateTimer();
+            countdownInterval = setInterval(updateTimer, 1000);
+        }
+
+        async function setSchedule() {
+            const inputVal = document.getElementById('scheduleInput').value;
+            if (!inputVal) return showToast('Please select a date/time', 'error');
+
+            const targetTime = new Date(inputVal).getTime();
+            if (targetTime < Date.now()) return showToast('Scheduled time must be in the future', 'error');
+
+            try {
+                await update(ref(dbb, `elections/${electionData.electionId}/settings`), { scheduledTime: targetTime, resultsPublished: false });
+                showToast('Schedule Set Successfully');
+            } catch (e) {
+                console.error(e);
+                showToast('Error setting schedule', 'error');
+            }
+        }
+
+        async function publishResults(manual) {
+            try {
+                await update(ref(dbb, `elections/${electionData.electionId}/settings`), { resultsPublished: true, scheduledTime: 0 });
+                if (manual) showToast('Results Published Immediately');
+            } catch (e) {
+                showToast('Error publishing', 'error');
+            }
+        }
+
+        // --- DATA LOADING & RENDERING ---
+        async function loadResultsData() {
+            // 1. Get Candidates
+            const candidatesSnap = await get(ref(dbb, `elections/${electionData.electionId}/candidates`));
+            const candidates = candidatesSnap.val() || {};
+
+            // 2. Get Votes (Firebase)
+            const votesSnap = await get(ref(dbb, `elections/${electionData.electionId}/votes`));
+            const votesData = votesSnap.val() || {};
+
+            // 3. Get Blockchain (Integrity)
+            const bcSnap = await get(ref(dbb, `elections/${electionData.electionId}/blockchain`));
+            const bcData = bcSnap.val() || {};
+
+            // 4. Get Eligible & Voted Counts
+            const eligibleSnap = await get(ref(dbb, `elections/${electionData.electionId}/eligible`));
+            const votedSnap = await get(ref(dbb, `elections/${electionData.electionId}/votes_voters`));
+
+            const eligibleCount = eligibleSnap.exists() ? Object.keys(eligibleSnap.val()).length : 0;
+            const votedCount = votedSnap.exists() ? Object.keys(votedSnap.val()).length : 0;
+            const turnout = eligibleCount > 0 ? ((votedCount / eligibleCount) * 100).toFixed(1) : 0;
+
+            // Update Stats
+            document.getElementById('statEligible').innerText = eligibleCount;
+            document.getElementById('statVoted').innerText = votedCount;
+            document.getElementById('statTurnout').innerText = `${turnout}%`;
+
+            // Merge Data
+            let resultsArray = [];
+            let totalVotes = 0;
+
+            Object.entries(candidates).forEach(([key, data]) => {
+                const fbVotes = votesData[key] || 0;
+                const bcVotes = bcData[key] ? (bcData[key].vote_count || 0) : 0;
+                totalVotes += fbVotes;
+
+                resultsArray.push({
+                    id: key,
+                    name: data.name,
+                    party: data.party || 'Independent',
+                    symbol: data.symbol,
+                    fbVotes: fbVotes,
+                    bcVotes: bcVotes,
+                    isMatch: fbVotes === bcVotes
+                });
+            });
+
+            // Sort by Votes
+            resultsArray.sort((a, b) => b.fbVotes - a.fbVotes);
+
+            // Render Winner
+            if (resultsArray.length > 0) {
+                const winner = resultsArray[0];
+                document.getElementById('winnerName').innerText = winner.name;
+                document.getElementById('winnerParty').innerText = winner.party;
+                document.getElementById('winnerVotes').innerText = `${winner.fbVotes} Votes`;
+            }
+
+            // Render Charts & Tables
+            renderBarChart(resultsArray, totalVotes);
+            renderPieChart(resultsArray, totalVotes);
+            renderTables(resultsArray);
+        }
+
+        function renderBarChart(data, total) {
+            const container = document.getElementById('barChartContainer');
+            container.innerHTML = '';
+
+            data.forEach(item => {
+                const percent = total > 0 ? (item.fbVotes / total) * 100 : 0;
+                const group = document.createElement('div');
+                group.className = 'bar-group';
+                group.innerHTML = `
+                    <div class="bar" style="height: ${percent}%; background: ${item.id === data[0].id ? 'var(--success-color)' : 'var(--primary-color)'}">
+                        <div class="bar-value">${item.fbVotes}</div>
+                    </div>
+                    <div class="bar-label">${item.symbol}</div>
+                `;
+                container.appendChild(group);
+            });
+        }
+
+        function renderPieChart(data, total) {
+            const chart = document.getElementById('pieChart');
+            const legend = document.getElementById('pieLegend');
+            legend.innerHTML = '';
+
+            let gradientStr = '';
+            let currentDeg = 0;
+            const colors = ['#7c4dff', '#00e676', '#ff5252', '#ffab00', '#00b0ff'];
+
+            data.forEach((item, index) => {
+                const percent = total > 0 ? (item.fbVotes / total) * 100 : 0;
+                const deg = (percent / 100) * 360;
+                const color = colors[index % colors.length];
+
+                gradientStr += `${color} ${currentDeg}deg ${currentDeg + deg}deg, `;
+                currentDeg += deg;
+
+                // Legend
+                legend.innerHTML += `
+                    <div>
+                        <div class="legend-dot" style="background:${color}"></div>
+                        <span>${item.name} (${Math.round(percent)}%)</span>
+                    </div>
+                `;
+            });
+
+            // Remove trailing comma and set gradient
+            gradientStr = gradientStr.slice(0, -2);
+            chart.style.background = `conic-gradient(${gradientStr})`;
+
+            // Center Text
+            const hole = document.createElement('div');
+            hole.className = 'pie-hole';
+            hole.innerHTML = `<span style="font-size:1.5rem; font-weight:bold;">${total}</span><span style="font-size:0.8rem; color:var(--text-muted)">TOTAL</span>`;
+            chart.innerHTML = '';
+            chart.appendChild(hole);
+        }
+
+        function renderTables(data) {
+            const tbody = document.querySelector('#candidateTable tbody');
+            const intBody = document.querySelector('#integrityTable tbody');
+            tbody.innerHTML = '';
+            intBody.innerHTML = '';
+
+            data.forEach((item, index) => {
+                // Main Table
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>#${index + 1}</td>
+                    <td style="font-weight:600">${item.name} <i style="font-size:0.8rem">${item.symbol}</i></td>
+                    <td>${item.party}</td>
+                    <td>${item.fbVotes}</td>
+                    <td>${item.bcVotes}</td>
+                    <td>${item.isMatch ? '<i class="fa-solid fa-check text-green"></i>' : '<i class="fa-solid fa-xmark text-red"></i>'}</td>
+                `;
+                tbody.appendChild(tr);
+
+                // Integrity Table
+                const intTr = document.createElement('tr');
+                intTr.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.fbVotes}</td>
+                    <td>${item.bcVotes}</td>
+                    <td>${item.isMatch ? 'Match' : 'Mismatch'}</td>
+                `;
+                intBody.appendChild(intTr);
+            });
+        }
+
+        // --- 7. GLOBAL UTILITIES & UI NAVIGATION ---
+        window.switchTab = (tid, el) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById(tid).classList.add('active');
+
+            // Update Sidebar
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            if (el) el.classList.add('active');
+
+            // UPDATE BOTTOM NAV SYNC (Mobile)
+            document.querySelectorAll('.bottom-nav .nav-icon').forEach(icon => {
+                icon.classList.remove('active');
+                // Check if the clicked tab ID matches the icon's data-target
+                if (icon.dataset.target === tid) {
+                    icon.classList.add('active');
+                }
+            });
+
+            // UPDATE HEADER TITLE BASED ON TAB
+            const titleMap = {
+                'dashboard': 'Dashboard',
+                'details': 'Election Details',
+                'voters': 'Voter Management',
+                'officers': 'Officers Management',
+                'booths': 'Booth Status',
+                'results': 'Results'
+            };
+            document.getElementById('pageTitle').innerText = titleMap[tid];
+
+            // RESPONSIVE FIX: Close sidebar on mobile click
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.remove('active');
+            }
+
+            // Trigger loads if switching to those tabs
+            if (tid === 'voters') {
+                // Default to Eligible, and check for request alerts
+                toggleVoterView('eligible');
+                checkRequestAlert();
+            }
+            if (tid === 'officers') loadOfficers();
+            if (tid === 'booths') loadBooths();
+        };
+
+        // Mobile Nav Click Handler
+        window.handleMobileNavClick = (tid, el) => {
+            // Find the sidebar nav item that matches this tid to pass to switchTab
+            const sidebarItem = document.querySelector(`.nav-item[onclick*="'${tid}'"]`);
+            switchTab(tid, sidebarItem);
+        };
+
+        // Toggle Sidebar for "Others" button
+        window.toggleMobileSidebar = (btn) => {
+            const sidebar = document.getElementById('sidebar');
+
+            // Toggle Active State of the "Others" button
+            document.querySelectorAll('.bottom-nav .nav-icon').forEach(icon => icon.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Show Sidebar
+            sidebar.classList.toggle('active');
+        };
+
+        window.openEditModal = () => {
+            document.getElementById('editUser').value = electionData.admin.username;
+            document.getElementById('editPass').value = electionData.admin.password;
+            document.getElementById('editEmail').value = electionData.admin.email;
+            document.getElementById('editModal').style.display = 'flex';
+        };
+
+        window.saveElectionDetails = async () => {
+            const updates = {
+                'admin/username': document.getElementById('editUser').value,
+                'admin/password': document.getElementById('editPass').value,
+                'admin/email': document.getElementById('editEmail').value
+            };
+            try {
+                await update(ref(dbb, `elections/${electionData.electionId}`), updates);
+                electionData.admin.username = updates['admin/username'];
+                electionData.admin.password = updates['admin/password'];
+                electionData.admin.email = updates['admin/email'];
+                updateDashboard();
+                renderFullDetails();
+                document.getElementById('editModal').style.display = 'none';
+                window.showToast('Updated Successfully', 'success');
+            } catch (e) { window.showToast('Update Failed', 'error'); }
+        };
+
+        window.openLogoutModal = () => document.getElementById('logoutModal').style.display = 'flex';
+        window.confirmLogout = () => { sessionStorage.clear(); localStorage.clear(); window.location.href = 'login.html'; };
+
+        window.showToast = (msg, type = 'success') => {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            t.style.borderLeftColor = type === 'error' ? 'var(--error-color)' : 'var(--success-color)';
+            t.querySelector('i').className = type === 'error' ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-circle-check';
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        };
+
+        window.copyElectionId = () => {
+            const id = document.getElementById('dashId').innerText;
+            navigator.clipboard.writeText(id).then(() => {
+                window.showToast('Election ID Copied');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                window.showToast('Failed to copy', 'error');
+            });
+        };
+
+        window.goToResultPage = () => {
+            sessionStorage.setItem('currentElectionId', electionData.electionId);
+            window.open('result.html', '_blank');
+        };
+
+        // Run Init
+        init();
+    </script>
+</body>
+
+</html>

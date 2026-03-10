@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voter Dashboard</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- ADDED: html2canvas Library for Downloading of Card as Image -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- ADDED: QRCode.js Library for Perfect Client-Side Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        /* --- Theme Variables (Updated to RED Theme) --- */
+        :root {
+            --bg-color: #0f1014;
+            --sidebar-bg: #16181e;
+            --card-bg: #1c1e26;
+            --input-bg: #272932;
+            /* PRIMARY GOLD COLOR */
+            --primary-color: #FFC107;
+            --primary-hover: #FFB300;
+            --primary-text: #ffffff;
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --border-color: #333645;
+            --success-color: #00e676;
+            --error-color: #ff3b30;
+            --warning-color: #ffc107;
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* --- Loader --- */
+        #fullLoader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 193, 7, 0.3);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+            z-index: 1001;
+            /* Above Bottom Nav when open */
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+        }
+
+        .brand i {
+            color: var(--primary-color);
+        }
+
+        .nav-links {
+            list-style: none;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255, 193, 7, 0.1);
+            color: var(--primary-color);
+        }
+
+        .nav-item.active {
+            background-color: var(--primary-color);
+            color: black;
+        }
+
+        .sidebar-logout {
+            background: none;
+            border: 1px solid var(--error-color);
+            color: var(--error-color);
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .sidebar-logout:hover {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        /* --- Main Content --- */
+        .main-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 30px;
+            position: relative;
+            display: none;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .header h2 {
+            font-size: 1.8rem;
+        }
+
+        .header-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-avatar {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--primary-color), #d63026);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 10px rgba(255, 59, 48, 0.3);
+        }
+
+        /* --- Tabs --- */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- Cards & Grid --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 120px;
+        }
+
+        .stat-card:hover {
+            border-color: var(--primary-color);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--primary-color);
+        }
+
+        .stat-title {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+
+        /* --- Copy Button --- */
+        .copy-icon-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .copy-icon-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* --- Inputs & Buttons --- */
+        .form-control {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 12px 15px;
+            border-radius: 8px;
+            outline: none;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+            transition: 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        /* --- UPDATED: Button Loading Animation --- */
+        .btn-loading-spinner {
+            display: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            border-top: 2px solid #000;
+            /* Black spinner for yellow button */
+            animation: spin 1s linear infinite;
+        }
+
+        /* Hide text content when loading */
+        .btn.loading .btn-text-content {
+            display: none;
+        }
+
+        /* Show spinner when loading */
+        .btn.loading .btn-loading-spinner {
+            display: block;
+        }
+
+        /* --- Details Grid --- */
+        .details-section-title {
+            grid-column: 1 / -1;
+            font-size: 1rem;
+            color: var(--primary-color);
+            margin: 20px 0 10px 0;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        /* --- Search Section (Elections) --- */
+        .search-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 600px;
+            margin: 0 auto 40px auto;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-box input {
+            margin-bottom: 0;
+        }
+
+        /* --- Request Cards --- */
+        .requests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .request-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            cursor: default;
+            /* Changed from pointer to prevent confusion with buttons */
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .request-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary-color);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .req-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            opacity: 0.8;
+        }
+
+        .req-id {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .req-code {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+        }
+
+        /* --- UPDATED: Card Actions Styles --- */
+        .card-actions {
+            margin-top: auto;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-card {
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+            border: none;
+            color: white;
+            text-decoration: none;
+        }
+
+        /* Live Poll Button Style */
+        .btn-live {
+            background-color: var(--error-color);
+            /* Red for Live */
+        }
+
+        .btn-live:hover {
+            background-color: #d63026;
+            box-shadow: 0 0 10px rgba(255, 59, 48, 0.4);
+        }
+
+        /* Result Button Style */
+        .btn-result {
+            background-color: var(--warning-color);
+            /* Gold for Result */
+            color: #000;
+        }
+
+        .btn-result:hover {
+            background-color: #e0a800;
+            box-shadow: 0 0 10px rgba(255, 193, 7, 0.4);
+        }
+
+        /* --- Badges --- */
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .st-pending {
+            background-color: rgba(255, 193, 7, 0.15);
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .st-approved {
+            background-color: rgba(0, 230, 118, 0.15);
+            color: #00e676;
+            border: 1px solid rgba(0, 230, 118, 0.3);
+        }
+
+        .st-rejected {
+            background-color: rgba(255, 59, 48, 0.15);
+            color: #ff3b30;
+            border: 1px solid rgba(255, 59, 48, 0.3);
+        }
+
+        /* --- Modals --- */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 500px;
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .close-modal:hover {
+            color: var(--text-main);
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .modal-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+        }
+
+        .modal-label {
+            color: var(--text-muted);
+        }
+
+        .modal-value {
+            font-weight: 600;
+            text-align: right;
+        }
+
+        /* --- Toast --- */
+        .toast {
+            position: fixed;
+            bottom: 90px;
+            /* Adjusted for mobile bottom nav */
+            right: 30px;
+            background-color: var(--card-bg);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 4000;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        @media (max-width: 768px) {
+            .toast {
+                bottom: 80px;
+                left: 50%;
+                transform: translateX(-50%) translateY(100px);
+                width: 90%;
+                right: auto;
+            }
+
+            .toast.show {
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* QR Code Section Specific Styles */
+        .qr-section-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background: var(--card-bg);
+            min-height: 400px;
+        }
+
+        /* The Card Design */
+        .qr-card {
+            background: #000000;
+            color: #ffffff;
+            width: 320px;
+            padding: 30px 20px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            border: 2px solid #FFB300;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Decorative Gold Background Elements */
+        .qr-card::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            left: -50px;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(211, 186, 47, 0.4) 0%, rgba(0, 0, 0, 0) 70%);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        .qr-card::after {
+            content: '';
+            position: absolute;
+            bottom: -30px;
+            right: -30px;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(211, 200, 47, 0.4) 0%, rgba(0, 0, 0, 0) 70%);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        /* Card Content */
+        .qr-header {
+            z-index: 1;
+        }
+
+        .qr-title {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #FFC107;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .qr-subtitle {
+            margin: 5px 0 0 0;
+            font-size: 0.75rem;
+            color: #cccccc;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* UPDATED QR BODY STYLES */
+        .qr-body {
+            z-index: 1;
+            background-color: #ffffff;
+            padding: 15px;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+
+        #qrcode {}
+
+        #qrcode img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .qr-footer {
+            z-index: 1;
+            width: 100%;
+            border-top: 1px solid #333;
+            padding-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .qr-label {
+            font-size: 0.7rem;
+            color: #888888;
+            text-transform: uppercase;
+        }
+
+        .qr-id {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #ffffff;
+            letter-spacing: 1px;
+        }
+
+        /* Download Button */
+        .qr-actions {
+            margin-top: 30px;
+        }
+
+        #downloadQrBtn {
+            background-color: #FFC107;
+            color: rgb(0, 0, 0);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        #downloadQrBtn:hover {
+            background-color: #FFB300;
+        }
+
+        #downloadQrBtn i {
+            font-size: 0.9em;
+        }
+
+        /* --- Empty States --- */
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: var(--text-muted);
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        /* --- ADDED: Candidate Grid Styles --- */
+        .candidate-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .candidate-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            cursor: default;
+        }
+
+        .c-symbol {
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid var(--primary-color);
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: var(--primary-color);
+            text-align: center;
+            padding: 5px;
+            line-height: 1.2;
+            word-wrap: break-word;
+        }
+
+        .c-party {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        /* --- MOBILE BOTTOM NAVIGATION (NEW) --- */
+        .bottom-nav {
+            display: none;
+            /* Hidden on desktop */
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 65px;
+            background-color: var(--sidebar-bg);
+            border-top: 1px solid var(--border-color);
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-icon {
+            color: var(--text-muted);
+            font-size: 1.4rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .nav-icon i {
+            margin-bottom: 4px;
+            transition: transform 0.2s;
+        }
+
+        .nav-icon.active {
+            color: var(--primary-color);
+        }
+
+        .nav-icon.active i {
+            transform: translateY(-2px);
+            text-shadow: 0 0 8px rgba(255, 193, 7, 0.6);
+        }
+
+        /* Active Indicator Line */
+        .nav-icon.active::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 40%;
+            height: 3px;
+            background-color: var(--primary-color);
+            border-radius: 0 0 4px 4px;
+        }
+
+        /* --- Mobile Responsive --- */
+        .mobile-toggle {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+                height: 100vh;
+                z-index: 1001;
+                /* Above Bottom Nav */
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                padding: 20px;
+                padding-bottom: 85px;
+                /* Prevent content from being hidden behind bottom nav */
+            }
+
+            .bottom-nav {
+                display: flex;
+            }
+
+            .mobile-toggle {
+                display: none;
+            }
+
+            /* Removed old floating button */
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Full Screen Loader -->
+    <div id="fullLoader">
+        <div class="spinner"></div>
+        <p style="color: var(--text-muted); font-size: 1.1rem;">Authenticating Voter...</p>
+    </div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="brand"><i class="fa-solid fa-check-to-slot"></i> <span>Voter</span></div>
+        <ul class="nav-links">
+            <li class="nav-item active" onclick="switchTab('dashboard', this)"><i class="fa-solid fa-gauge-high"></i>
+                Dashboard</li>
+            <li class="nav-item" onclick="switchTab('details', this)"><i class="fa-solid fa-user"></i> My Details</li>
+            <li class="nav-item" onclick="switchTab('elections', this)"><i class="fa-solid fa-vote-yea"></i> Elections
+            </li>
+            <li class="nav-item" onclick="switchTab('candidates', this)"><i class="fa-solid fa-users"></i> Candidates
+            </li>
+            <li class="nav-item" onclick="switchTab('qr', this)"><i class="fa-solid fa-qrcode"></i> My QR Code</li>
+        </ul>
+        <button class="sidebar-logout" onclick="handleLogout()"><i class="fa-solid fa-power-off"></i> Logout</button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <div class="header">
+            <h2 id="pageTitle">Dashboard</h2>
+            <div class="header-profile">
+                <div class="header-avatar" id="headerAvatar">V</div>
+            </div>
+        </div>
+
+        <!-- Tab: Dashboard -->
+        <div id="dashboard" class="tab-content active">
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-title">
+                        Voter ID
+                        <button class="copy-icon-btn" onclick="window.copyMyVoterId()" title="Copy Voter ID">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                    <div class="stat-value" style="color: var(--primary-color);" id="dashId">---</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Full Name</div>
+                    <div class="stat-value" id="dashFullname">---</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Student Type</div>
+                    <div class="stat-value" id="dashType">---</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Date of Birth</div>
+                    <div class="stat-value" id="dashDob">---</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Details -->
+        <div id="details" class="tab-content">
+            <div class="details-grid" id="detailsContainer">
+                <!-- Content Injected via JS -->
+            </div>
+        </div>
+
+        <!-- Tab: Elections -->
+        <div id="elections" class="tab-content">
+            <!-- 1. Join Section -->
+            <div class="search-container">
+                <h2 style="margin-bottom: 10px;">Find Election</h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">Enter the Election ID provided by your
+                    administrator to request access.</p>
+                <div class="search-box">
+                    <input type="text" id="electionIdInput" class="form-control"
+                        placeholder="Enter Election ID (e.g. EL2024)" style="text-transform: uppercase;"
+                        onkeypress="handleEnter(event)">
+
+                    <!-- Button structure supports loading animation -->
+                    <button id="searchElecBtn" class="btn btn-primary" onclick="window.searchElection()">
+                        <span class="btn-text-content"><i class="fa-solid fa-magnifying-glass"></i> Search</span>
+                        <div class="btn-loading-spinner"></div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. Status Section -->
+            <h3 style="margin-bottom: 20px; font-size: 1.2rem;">My Election Requests</h3>
+            <div id="requestsList" class="requests-grid">
+                <!-- Cards injected by JS -->
+            </div>
+            <div id="noRequestsMsg" class="empty-state" style="display:none;">
+                <i class="fa-solid fa-inbox"
+                    style="font-size: 2rem; margin-bottom: 10px; color: var(--border-color);"></i>
+                <p>No election requests found.</p>
+            </div>
+        </div>
+
+        <!-- Tab: Candidates -->
+        <div id="candidates" class="tab-content">
+            <div id="candidatesGrid" class="candidate-grid">
+                <!-- Candidates injected here -->
+            </div>
+            <div id="noCandidatesMsg" class="empty-state" style="display:none;">
+                <i class="fa-solid fa-users-slash"
+                    style="font-size: 2rem; margin-bottom: 10px; color: var(--border-color);"></i>
+                <p>No candidates found. Please join an election to view candidates.</p>
+            </div>
+        </div>
+
+        <!-- Tab: QR Code -->
+        <div id="qr" class="tab-content">
+            <div class="qr-section-wrapper">
+                <!-- The Card to be Captured -->
+                <div id="qrCard" class="qr-card">
+                    <div class="qr-header">
+                        <h2 class="qr-title">NOVA-EDEN</h2>
+                        <p class="qr-subtitle">Secured Solutions for Institutes</p>
+                    </div>
+
+                    <div class="qr-body">
+                        <!-- The QRCode.js library will injects QR code here -->
+                        <div id="qrcode"></div>
+                    </div>
+
+                    <div class="qr-footer">
+                        <span class="qr-label">Voter ID:</span>
+                        <span id="qrVoterIdDisplay" class="qr-id">Loading...</span>
+                    </div>
+                </div>
+
+                <!-- Action Area -->
+                <div class="qr-actions">
+                    <button id="downloadQrBtn" class="btn-primary">
+                        <i class="fa-solid fa-download"></i> Download Card
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- NEW: Mobile Bottom Navigation -->
+    <div class="bottom-nav">
+        <!-- Dashboard -->
+        <div class="nav-icon active" data-target="dashboard" onclick="handleMobileNavClick('dashboard', this)">
+            <i class="fa-solid fa-gauge-high"></i>
+        </div>
+        <!-- Elections -->
+        <div class="nav-icon" data-target="elections" onclick="handleMobileNavClick('elections', this)">
+            <i class="fa-solid fa-vote-yea"></i>
+        </div>
+        <!-- Candidates -->
+        <div class="nav-icon" data-target="candidates" onclick="handleMobileNavClick('candidates', this)">
+            <i class="fa-solid fa-users"></i>
+        </div>
+        <!-- Others (Details, QR, Logout) -->
+        <div class="nav-icon" data-target="others" onclick="toggleMobileSidebar(this)">
+            <i class="fa-solid fa-grip"></i>
+        </div>
+    </div>
+
+    <!-- Search Election Modal -->
+    <div id="electionModal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal('electionModal')">&times;</button>
+            <div class="modal-header">
+                <h3>Election Found</h3>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <div class="modal-row"><span class="modal-label">Election ID</span><span class="modal-value"
+                        id="modalElecId"></span></div>
+                <div class="modal-row"><span class="modal-label">Admin</span><span class="modal-value"
+                        id="modalElecAdmin"></span></div>
+                <div class="modal-row"><span class="modal-label">Status</span><span class="modal-value"
+                        style="color: var(--success-color);">Active</span></div>
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" id="requestBtn" onclick="window.sendRequest()">Send
+                Request to Join</button>
+        </div>
+    </div>
+
+    <!-- Change PIN Modal -->
+    <div id="changePinModal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal('changePinModal')">&times;</button>
+            <div class="modal-header">
+                <h3>Change PIN</h3>
+            </div>
+            <div class="form-group">
+                <label style="display:block; color:var(--text-muted); margin-bottom:5px;">Current PIN</label>
+                <input type="password" id="currentPinInput" class="form-control" maxlength="6" placeholder="******">
+            </div>
+            <div class="form-group">
+                <label style="display:block; color:var(--text-muted); margin-bottom:5px;">New PIN</label>
+                <input type="password" id="newPinInput" class="form-control" maxlength="6" placeholder="6 digits">
+            </div>
+            <div class="form-group">
+                <label style="display:block; color:var(--text-muted); margin-bottom:5px;">Confirm New PIN</label>
+                <input type="password" id="confirmPinInput" class="form-control" maxlength="6"
+                    placeholder="Confirm 6 digits">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="btn btn-secondary" style="flex:1;" onclick="closeModal('changePinModal')">Cancel</button>
+                <button class="btn btn-primary" style="flex:1;" onclick="window.handleChangePin()">Update PIN</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Election Details Modal -->
+    <div id="electionDetailsModal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal('electionDetailsModal')">&times;</button>
+            <div class="modal-header">
+                <h3>Election Details</h3>
+            </div>
+            <div id="electionDetailsBody">
+                <!-- Content filled dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Modal -->
+    <div id="logoutModal" class="modal">
+        <div class="modal-content" style="text-align:center; max-width: 400px;">
+            <i class="fa-solid fa-right-from-bracket"
+                style="font-size: 3rem; color: var(--error-color); margin-bottom: 15px;"></i>
+            <h3>Logout?</h3>
+            <p style="margin: 15px 0; color: var(--text-muted);">This will end your current session.</p>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button class="btn btn-secondary" onclick="closeModal('logoutModal')">Cancel</button>
+                <button class="btn btn-primary" style="background-color: var(--error-color); color: white;"
+                    onclick="confirmLogout()">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast">
+        <i class="fa-solid fa-circle-info"></i> <span id="toastMsg">Notification</span>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, get, set, remove, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCdyka1XrXKXyfmHjhQsKvDOvHT8dPnmIg",
+            authDomain: "nova-d0771.firebaseapp.com",
+            databaseURL: "https://nova-d0771-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "nova-d0771",
+            storageBucket: "nova-d0771.firebasestorage.app",
+            messagingSenderId: "650150783330",
+            appId: "1:650150783330:web:054b60bc5fb987a087243b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let currentVoterId = null;
+        let currentVoterData = null;
+        let currentElectionId = null;
+        let refreshInterval = null;
+        let previousElectionDataHash = null;
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            currentVoterId = sessionStorage.getItem('voterId');
+            if (!currentVoterId) {
+                showToast('Session expired. Redirecting...', 'error');
+                setTimeout(() => window.location.href = 'login.html', 1500);
+                return;
+            }
+
+            try {
+                const snapshot = await get(ref(db, 'voters/' + currentVoterId));
+                if (snapshot.exists()) {
+                    currentVoterData = snapshot.val();
+                    populateDashboard(currentVoterData);
+                    renderFullDetails(currentVoterData);
+
+                    // Reveal Main Content
+                    document.getElementById('fullLoader').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('fullLoader').style.display = 'none';
+                        document.getElementById('mainContent').style.display = 'block';
+                    }, 500);
+                } else {
+                    showToast('Voter data corrupted.', 'error');
+                    setTimeout(() => window.location.href = 'login.html', 2000);
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('Error loading data.', 'error');
+            }
+        });
+
+        // --- 1. Dashboard Logic ---
+        function populateDashboard(data) {
+            document.getElementById('dashFullname').textContent = data.name;
+
+            // IMPORTANT: Ensure we use session ID for display if DB ID is missing
+            const displayId = data.voterId || currentVoterId;
+            document.getElementById('dashId').textContent = displayId;
+
+            // Date Format DD/MM/YYYY
+            if (data.dob) {
+                const [y, m, d] = data.dob.split('-');
+                document.getElementById('dashDob').textContent = `${d}/${m}/${y}`;
+            } else {
+                document.getElementById('dashDob').textContent = 'N/A';
+            }
+            document.getElementById('dashType').textContent = data.type === 'school' ? 'School' : 'College';
+
+            // Update Header Avatar
+            const initial = data.name.charAt(0).toUpperCase();
+            document.getElementById('headerAvatar').textContent = initial;
+
+            // CALL TO GENERATE QR
+            // Robust Fix: Pass the trimmed session ID to guarantee data exists
+            generateVoterQrCard(currentVoterId.trim());
+        }
+
+        window.copyMyVoterId = () => {
+            const id = document.getElementById('dashId').innerText;
+            if (id && id !== '---') {
+                navigator.clipboard.writeText(id).then(() => {
+                    showToast('Voter ID Copied!', 'success');
+                }).catch(err => {
+                    showToast('Failed to copy', 'error');
+                });
+            }
+        };
+
+        window.handleEnter = (e) => {
+            if (e.key === 'Enter') window.searchElection();
+        }
+
+        // --- 2. Details Logic ---
+        function renderFullDetails(data) {
+            const container = document.getElementById('detailsContainer');
+            container.innerHTML = '';
+
+            const createHeader = (text) => {
+                const h = document.createElement('div');
+                h.className = 'details-section-title';
+                h.innerText = text;
+                return h;
+            };
+
+            const createItem = (label, value, isVoterId = false, isPin = false) => {
+                const div = document.createElement('div');
+                div.className = 'stat-card';
+
+                let innerHTML = `<div class="stat-title">${label}</div>`;
+
+                if (isPin) {
+                    innerHTML += `
+                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px;">
+                            <span class="stat-value" style="letter-spacing: 4px;">******</span>
+                            <button class="btn btn-secondary btn-sm" onclick="window.openChangePinModal()">Change</button>
+                        </div>
+                    `;
+                } else if (isVoterId) {
+                    innerHTML += `
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="stat-value">${value || '-'}</span>
+                            <button class="copy-icon-btn" onclick="navigator.clipboard.writeText('${value}').then(()=>window.showToast('Copied!', 'success'))" title="Copy ID">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    innerHTML += `<div class="stat-value">${value || '-'}</div>`;
+                }
+
+                div.innerHTML = innerHTML;
+                return div;
+            };
+
+            container.appendChild(createHeader('Personal Information'));
+            container.appendChild(createItem('Full Name', data.name));
+            container.appendChild(createItem('Date of Birth', data.dob));
+            if (data.dob) {
+                const [y, m, d] = data.dob.split('-');
+                container.lastChild.innerHTML = `<div class="stat-title">Date of Birth</div><div class="stat-value">${d}/${m}/${y}</div>`;
+            }
+            container.appendChild(createItem('Gender', data.gender));
+
+            container.appendChild(createHeader('Account Information'));
+            container.appendChild(createItem('Voter ID', data.voterId || currentVoterId, true));
+            container.appendChild(createItem('Username', data.username));
+            container.appendChild(createItem('Student Type', data.type));
+            container.appendChild(createItem('Security PIN', null, false, true));
+
+            container.appendChild(createHeader('Institution Details'));
+            if (data.type === 'school') {
+                container.appendChild(createItem('School Code', data.schoolCode));
+            } else {
+                container.appendChild(createItem('College Code', data.collegeCode));
+            }
+            container.appendChild(createItem('ID Number', data.admNo || data.rollNo));
+        }
+
+        // --- 3. PIN Change Logic ---
+        window.openChangePinModal = () => {
+            document.getElementById('currentPinInput').value = '';
+            document.getElementById('newPinInput').value = '';
+            document.getElementById('confirmPinInput').value = '';
+            document.getElementById('changePinModal').style.display = 'flex';
+        };
+
+        window.handleChangePin = async () => {
+            const currentPin = document.getElementById('currentPinInput').value.trim();
+            const newPin = document.getElementById('newPinInput').value.trim();
+            const confirmPin = document.getElementById('confirmPinInput').value.trim();
+
+            if (!currentPin || !newPin || !confirmPin) { showToast('Please fill all fields', 'error'); return; }
+            if (currentPin !== currentVoterData.pin) { showToast('Current PIN is incorrect', 'error'); return; }
+            if (!/^\d{6}$/.test(newPin)) { showToast('New PIN must be exactly 6 digits', 'error'); return; }
+            if (newPin !== confirmPin) { showToast('New PIN and Confirmation do not match', 'error'); return; }
+
+            try {
+                await update(ref(db, `voters/${currentVoterId}`), { pin: newPin });
+                currentVoterData.pin = newPin;
+                showToast('PIN Changed Successfully!', 'success');
+                closeModal('changePinModal');
+            } catch (error) {
+                console.error(error);
+                showToast('Failed to update PIN', 'error');
+            }
+        };
+
+        // --- 4. NEW: Redirection Functions for Live/Result ---
+        window.openLive = (electionId) => {
+            sessionStorage.setItem('currentElectionId', electionId);
+            window.open('live.html', '_blank');
+        };
+
+        window.openResult = (electionId) => {
+            sessionStorage.setItem('currentElectionId', electionId);
+            window.open('result.html', '_blank');
+        };
+
+        // --- 5. Elections Logic (UPDATED) ---
+
+        async function loadMyElections() {
+            const reqSentSnap = await get(ref(db, `voters/${currentVoterId}/requestsSent`));
+            const appearSnap = await get(ref(db, `voters/${currentVoterId}/appear`));
+
+            const container = document.getElementById('requestsList');
+            const msg = document.getElementById('noRequestsMsg');
+
+            let electionIds = new Set();
+            if (reqSentSnap.exists()) Object.keys(reqSentSnap.val()).forEach(k => electionIds.add(k));
+            if (appearSnap.exists()) Object.keys(appearSnap.val()).forEach(k => electionIds.add(k));
+
+            let currentDataList = [];
+
+            if (electionIds.size > 0) {
+                for (const electionId of electionIds) {
+                    const elecSnap = await get(ref(db, `elections/${electionId}`));
+                    if (elecSnap.exists()) {
+                        const elecData = elecSnap.val();
+                        let status = 'Requested';
+                        let statusClass = 'st-pending';
+
+                        // Check eligibility
+                        const approvedSnap = await get(ref(db, `elections/${electionId}/eligible/${currentVoterId}`));
+                        if (approvedSnap.exists()) {
+                            status = 'Accepted';
+                            statusClass = 'st-approved';
+                        } else {
+                            const reqSnap = await get(ref(db, `elections/${electionId}/requests/${currentVoterId}`));
+                            if (!reqSnap.exists()) {
+                                status = 'Rejected';
+                                statusClass = 'st-rejected';
+                            }
+                        }
+
+                        // NEW: Check if results are published in settings
+                        const settingsSnap = await get(ref(db, `elections/${electionId}/settings`));
+                        const settings = settingsSnap.val();
+                        const resultsPublished = settings ? settings.resultsPublished : false;
+
+                        currentDataList.push({
+                            id: electionId,
+                            code: elecData.type === 'school' ? elecData.schoolCode : elecData.collegeCode,
+                            status: status,
+                            statusClass: statusClass,
+                            resultsPublished: resultsPublished, // New flag
+                            data: elecData
+                        });
+                    }
+                }
+            }
+
+            const currentHash = JSON.stringify(currentDataList);
+            if (currentHash === previousElectionDataHash) { return; }
+            previousElectionDataHash = currentHash;
+
+            container.innerHTML = '';
+            if (currentDataList.length > 0) {
+                currentDataList.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'request-card';
+
+                    // Construct Buttons HTML if Accepted
+                    let buttonsHtml = '';
+                    if (item.status === 'Accepted') {
+                        buttonsHtml = `
+                            <div class="card-actions">
+                                <button class="btn-card btn-live" onclick="window.openLive('${item.id}')">
+                                    <i class="fa-solid fa-tower-broadcast"></i> Live Poll
+                                </button>
+                                ${item.resultsPublished ? `
+                                    <button class="btn-card btn-result" onclick="window.openResult('${item.id}')">
+                                        <i class="fa-solid fa-trophy"></i> Result
+                                    </button>
+                                ` : ''}
+                            </div>
+                        `;
+                    }
+
+                    card.innerHTML = `
+                        <i class="fa-solid fa-flag req-icon"></i>
+                        <div class="req-id">${item.id}</div>
+                        <div class="req-code">${item.code}</div>
+                        <div style="width: 100%;">
+                            <span class="status-badge ${item.statusClass}">${item.status}</span>
+                        </div>
+                        ${buttonsHtml}
+                    `;
+
+                    // Only allow clicking card body for details if buttons aren't main focus, 
+                    // but here we removed pointer-events: none from buttons, so clicking button works.
+                    // We remove card.onclick to prevent conflict with button clicks if user clicks slightly off.
+
+                    container.appendChild(card);
+                });
+                msg.style.display = 'none';
+            } else {
+                msg.style.display = 'block';
+            }
+        }
+
+        window.openElectionDetailsModal = (item) => {
+            const modalBody = document.getElementById('electionDetailsBody');
+            const d = item.data;
+            modalBody.innerHTML = `
+                <div class="modal-row"><span class="modal-label">Election ID</span><span class="modal-value">${item.id}</span></div>
+                <div class="modal-row"><span class="modal-label">Institution Code</span><span class="modal-value">${item.code}</span></div>
+                <div class="modal-row"><span class="modal-label">Institution Name</span><span class="modal-value">${d.type === 'school' ? d.schoolName : d.collegeName}</span></div>
+                <div class="modal-row"><span class="modal-label">Type</span><span class="modal-value">${d.type.toUpperCase()}</span></div>
+                <div class="modal-row"><span class="modal-label">Admin</span><span class="modal-value">${d.admin.username}</span></div>
+                <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
+                <div class="modal-row"><span class="modal-label">Date</span><span class="modal-value">${d.schedule?.date || 'N/A'}</span></div>
+                <div class="modal-row"><span class="modal-label">Start Time</span><span class="modal-value">${d.schedule?.startTime || 'N/A'}</span></div>
+            `;
+            document.getElementById('electionDetailsModal').style.display = 'flex';
+        };
+
+        // --- UPDATED: Search Election Logic with Loading Animation ---
+        window.searchElection = async () => {
+            const id = document.getElementById('electionIdInput').value.trim().toUpperCase();
+            const btn = document.getElementById('searchElecBtn');
+
+            if (!id) {
+                showToast('Please enter an Election ID', 'error');
+                return;
+            }
+
+            // START: Set loading state
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            const checkReq = await get(ref(db, `voters/${currentVoterId}/requestsSent/${id}`));
+            const checkAppear = await get(ref(db, `voters/${currentVoterId}/appear/${id}`));
+
+            if (checkReq.exists() || checkAppear.exists()) {
+                showToast('You have already requested or joined this election.', 'error');
+                // RESET: Remove loading state on error/early exit
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                return;
+            }
+
+            try {
+                const snapshot = await get(ref(db, 'elections/' + id));
+                if (snapshot.exists()) {
+                    const elecData = snapshot.val();
+                    currentElectionId = id;
+                    document.getElementById('modalElecId').textContent = id;
+                    document.getElementById('modalElecAdmin').textContent = elecData.admin.username;
+                    document.getElementById('electionModal').style.display = 'flex';
+                } else {
+                    showToast('Election ID not found', 'error');
+                }
+            } catch (error) {
+                showToast('Error searching database', 'error');
+                console.error(error);
+            } finally {
+                // RESET: Always remove loading state regardless of success or failure
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        };
+
+        window.sendRequest = async () => {
+            const btn = document.getElementById('requestBtn');
+            btn.textContent = 'Sending...';
+            btn.disabled = true;
+
+            try {
+                await set(ref(db, `elections/${currentElectionId}/requests/${currentVoterId}`), {
+                    status: 'requested',
+                    timestamp: Date.now(),
+                    voterName: currentVoterData.name
+                });
+
+                await set(ref(db, `voters/${currentVoterId}/requestsSent/${currentElectionId}`), true);
+
+                showToast('Request Sent Successfully!', 'success');
+                closeModal('electionModal');
+                loadMyElections();
+                document.getElementById('electionIdInput').value = '';
+                btn.textContent = 'Send Request to Join';
+                btn.disabled = false;
+            } catch (error) {
+                showToast('Failed to send request', 'error');
+                btn.textContent = 'Try Again';
+                btn.disabled = false;
+            }
+        };
+
+        // --- 6. Candidates Logic ---
+        async function loadVoterCandidates() {
+            const grid = document.getElementById('candidatesGrid');
+            const msg = document.getElementById('noCandidatesMsg');
+
+            // Clear current content
+            grid.innerHTML = '';
+            msg.style.display = 'none';
+
+            // 1. Check which elections voter is part of ('appear' node)
+            const appearSnap = await get(ref(db, `voters/${currentVoterId}/appear`));
+
+            if (!appearSnap.exists()) {
+                msg.style.display = 'block';
+                return;
+            }
+
+            const electionIds = Object.keys(appearSnap.val());
+            let candidatesFound = false;
+
+            // 2. Loop through each election and fetch candidates
+            for (const elecId of electionIds) {
+                try {
+                    const candSnap = await get(ref(db, `elections/${elecId}/candidates`));
+                    if (candSnap.exists()) {
+                        candidatesFound = true;
+                        const candidates = Object.entries(candSnap.val());
+
+                        candidates.forEach(([key, data]) => {
+                            const card = document.createElement('div');
+                            card.className = 'candidate-card';
+                            card.innerHTML = `
+                                <div class="c-symbol">${data.symbol}</div>
+                                <div class="c-party">${data.party}</div>
+                                <h3 style="font-size: 1.1rem; margin-bottom: 5px;">${data.name}</h3>
+                            `;
+                            grid.appendChild(card);
+                        });
+                    }
+                } catch (err) {
+                    console.error(`Error fetching candidates for ${elecId}:`, err);
+                }
+            }
+
+            if (!candidatesFound) {
+                msg.style.display = 'block';
+            }
+        }
+
+        // --- 7. Tab Switching Logic ---
+        window.switchTab = (tabId, el) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+
+            // Update Sidebar
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            if (el) el.classList.add('active');
+
+            // UPDATE BOTTOM NAV SYNC (Mobile)
+            document.querySelectorAll('.bottom-nav .nav-icon').forEach(icon => {
+                icon.classList.remove('active');
+                // Check if that tab has a direct bottom nav target (Dashboard, Elections, Candidates)
+                if (icon.dataset.target === tabId) {
+                    icon.classList.add('active');
+                }
+            });
+
+            if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('active');
+
+            const titleMap = { 'dashboard': 'Dashboard', 'details': 'My Profile', 'elections': 'Elections', 'candidates': 'Candidates', 'qr': 'QR Code' };
+            document.getElementById('pageTitle').innerText = titleMap[tabId];
+
+            if (refreshInterval) clearInterval(refreshInterval);
+            if (tabId === 'elections') {
+                loadMyElections();
+                // Realtime polling every 5 seconds
+                refreshInterval = setInterval(loadMyElections, 5000);
+            }
+            // ADDED: Load Candidates when Candidates tab is clicked
+            else if (tabId === 'candidates') {
+                loadVoterCandidates();
+            }
+        };
+
+        window.handleLogout = () => { document.getElementById('logoutModal').style.display = 'flex'; };
+
+        window.confirmLogout = () => {
+            if (refreshInterval) clearInterval(refreshInterval);
+            sessionStorage.removeItem('voterId');
+            sessionStorage.removeItem('voterName');
+            window.location.href = 'login.html';
+        };
+
+        window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+
+        window.showToast = (msg, type = 'info') => {
+            const toast = document.getElementById('toast');
+            const icon = toast.querySelector('i');
+            document.getElementById('toastMsg').textContent = msg;
+            toast.style.borderLeftColor = type === 'error' ? 'var(--error-color)' : (type === 'success' ? 'var(--success-color)' : 'var(--primary-color)');
+            icon.className = type === 'error' ? 'fa-solid fa-circle-exclamation' : (type === 'success' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-info');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        };
+
+        window.onclick = (e) => {
+            if (e.target.classList.contains('modal')) e.target.style.display = 'none';
+        };
+
+        // --- 8. Mobile Navigation Handlers (NEW) ---
+        window.handleMobileNavClick = (tid, el) => {
+            // Find the sidebar nav item that matches this tid to pass to switchTab
+            const sidebarItem = document.querySelector(`.nav-item[onclick*="'${tid}'"]`);
+            switchTab(tid, sidebarItem);
+        };
+
+        window.toggleMobileSidebar = (btn) => {
+            const sidebar = document.getElementById('sidebar');
+
+            // Toggle Active State of the "Others" button
+            document.querySelectorAll('.bottom-nav .nav-icon').forEach(icon => icon.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Show Sidebar
+            sidebar.classList.toggle('active');
+        };
+
+        /**
+         * Generates the QR Code using qrcode.js library.
+         * This ensures high contrast (Black on White) and high reliability on digital screens.
+         */
+        function generateVoterQrCard(voterId) {
+            // 1. Update text on card explicitly
+            const qrIdDisplay = document.getElementById('qrVoterIdDisplay');
+            if (qrIdDisplay) {
+                qrIdDisplay.textContent = voterId;
+                qrIdDisplay.style.color = '#ffffff'; // Force white text
+            }
+
+            // 2. Clear previous QR code
+            const qrContainer = document.getElementById("qrcode");
+            qrContainer.innerHTML = "";
+
+            // 3. Generate New QR Code
+            // Using qrcode.js for client-side generation.
+            // Settings: High resolution, High error correction (for screen glare), Standard colors.
+            new QRCode(qrContainer, {
+                text: voterId,
+                width: 256,
+                height: 256,
+                colorDark: "#000000", // Black modules
+                colorLight: "#ffffff", // White background
+                correctLevel: QRCode.CorrectLevel.H // High Error Correction
+            });
+
+            // 4. Setup Download Handler
+            const downloadBtn = document.getElementById('downloadQrBtn');
+            const cardElement = document.getElementById('qrCard');
+
+            // Remove old listener
+            const newDownloadBtn = downloadBtn.cloneNode(true);
+            downloadBtn.parentNode.replaceChild(newDownloadBtn, downloadBtn);
+
+            newDownloadBtn.addEventListener('click', function () {
+                if (typeof html2canvas === 'undefined') {
+                    showToast('Library loading... Please try again in a moment.', 'error');
+                    return;
+                }
+                html2canvas(cardElement, {
+                    backgroundColor: null,
+                    scale: 2 // High quality download
+                }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `NOVA_QR_${voterId}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>

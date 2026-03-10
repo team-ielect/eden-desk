@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova EDEN | Create Election</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-color: #0f1014;
+            --card-bg: rgba(28, 30, 38, 0.7);
+            --input-bg: rgba(39, 41, 50, 0.8);
+            --primary-color: #7c4dff;
+            --primary-hover: #651fff;
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --border-color: #333645;
+            --error-color: #ff5252;
+            --success-color: #00e676;
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- Animated Background --- */
+        .ambient-light {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            z-index: -1;
+            background: radial-gradient(circle at 50% 50%, #1a1b26 0%, #0f1014 100%);
+        }
+
+        .blob {
+            position: absolute;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: float 10s infinite alternate ease-in-out;
+            border-radius: 50%;
+        }
+
+        .blob-1 {
+            top: -10%;
+            left: -10%;
+            width: 500px;
+            height: 500px;
+            background: #4c1d95;
+            animation-duration: 12s;
+        }
+
+        .blob-2 {
+            bottom: -10%;
+            right: -10%;
+            width: 600px;
+            height: 600px;
+            background: #2563eb;
+            animation-duration: 15s;
+        }
+
+        .blob-3 {
+            top: 40%;
+            left: 40%;
+            width: 400px;
+            height: 400px;
+            background: #db2777;
+            animation-duration: 18s;
+            opacity: 0.2;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            100% {
+                transform: translate(30px, 50px) scale(1.1);
+            }
+        }
+
+        /* --- Dashboard --- */
+        #dashboard {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-area h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: -1.5px;
+            background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-area p {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            margin-bottom: 50px;
+            font-weight: 300;
+        }
+
+        .create-btn {
+            background: linear-gradient(135deg, var(--primary-color), #6200ea);
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(124, 77, 255, 0.4);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .create-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(124, 77, 255, 0.5);
+        }
+
+        /* --- Full Screen Form --- */
+        #full-screen-form {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 16, 20, 0.98);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            overflow-y: auto;
+            animation: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes zoomIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .form-header {
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(28, 30, 38, 0.8);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .form-header h3 {
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .close-btn {
+            background: rgba(255, 82, 82, 0.1);
+            border: none;
+            color: var(--error-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .form-container {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px 20px 100px 20px;
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin: 35px 0 20px 0;
+            font-weight: 700;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 5px;
+            display: inline-block;
+        }
+
+        /* --- Form Group Structure --- */
+        .form-group {
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        /* Label Styling */
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .form-group:focus-within label {
+            color: var(--primary-color);
+        }
+
+        /* Input Wrapper */
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        /* The Input Box */
+        .form-control {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            /* Left padding accommodates the icon */
+            padding: 14px 16px 14px 48px;
+            border-radius: 10px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s;
+            height: 50px;
+            /* Fixed height for consistency */
+        }
+
+        .form-control.no-icon {
+            padding-left: 16px;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            background-color: rgba(39, 41, 50, 1);
+            box-shadow: 0 0 0 4px rgba(124, 77, 255, 0.1);
+        }
+
+        /* Icon Positioning - Perfect Center Left */
+        .input-icon {
+            position: absolute;
+            left: 18px;
+            /* Distance from left edge */
+            top: 50%;
+            /* Vertically center */
+            transform: translateY(-50%);
+            /* Fine tune center */
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            pointer-events: none;
+            /* Allows clicking through icon to input */
+            transition: color 0.3s;
+            z-index: 2;
+        }
+
+        /* Validation Visuals */
+        .form-control.valid {
+            border-color: var(--success-color);
+        }
+
+        .form-control.valid+.input-icon {
+            color: var(--success-color);
+        }
+
+        .form-control.invalid {
+            border-color: var(--error-color);
+        }
+
+        .form-control.invalid+.input-icon {
+            color: var(--error-color);
+        }
+
+        /* Error Message Styling */
+        .error-msg {
+            display: block;
+            color: var(--error-color);
+            font-size: 0.8rem;
+            margin-top: 6px;
+            margin-left: 4px;
+            min-height: 18px;
+            /* Prevent layout jump */
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: all 0.3s ease;
+        }
+
+        .form-group.has-error .error-msg {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ID Display Specifics */
+        .id-display-wrapper {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .id-display {
+            background: var(--input-bg);
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 14px;
+            border-radius: 10px;
+            flex-grow: 1;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .copy-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 54px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: var(--text-main);
+            color: var(--bg-color);
+        }
+
+        /* Slider */
+        .slider-container {
+            display: flex;
+            background-color: var(--input-bg);
+            border-radius: 50px;
+            padding: 5px;
+            position: relative;
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+        }
+
+        .slider-option {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            z-index: 2;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: color 0.3s;
+        }
+
+        .slider-option.active-text {
+            color: white;
+        }
+
+        .slider-background {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: calc(50% - 5px);
+            height: calc(100% - 10px);
+            background: var(--primary-color);
+            border-radius: 50px;
+            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            z-index: 1;
+        }
+
+        /* Dynamic Fields */
+        .dynamic-fields {
+            display: none;
+            animation: fadeIn 0.4s;
+        }
+
+        .dynamic-fields.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Submit */
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary-color), #b388ff);
+            color: white;
+            border: none;
+            padding: 18px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 10px;
+            margin-top: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px rgba(124, 77, 255, 0.3);
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(124, 77, 255, 0.4);
+        }
+
+        .submit-btn:disabled {
+            background: var(--border-color);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(30, 30, 40, 0.95);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 2000;
+            border: 1px solid var(--border-color);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--error-color);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Animated Background -->
+    <div class="ambient-light">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <!-- Landing Page -->
+    <div id="dashboard">
+        <div class="logo-area">
+            <h1>Nova <span>EDEN</span></h1>
+            <p>Secure Voting Management</p>
+        </div>
+        <button class="create-btn" id="openCreateBtn">
+            <i class="fa-solid fa-plus"></i> Create New Election
+        </button>
+    </div>
+
+    <!-- Full Screen Form -->
+    <div id="full-screen-form">
+        <div class="form-header">
+            <h3>Setup Election</h3>
+            <button class="close-btn" id="closeFormBtn">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+
+        <div class="form-container">
+
+            <!-- Section: Identity -->
+            <div class="section-title">Identity</div>
+
+            <div class="form-group">
+                <label>Election ID</label>
+                <div class="id-display-wrapper">
+                    <div type="text" id="electionId" class="id-display">LOAD...</div>
+                    <button class="copy-btn" id="copyIdBtn" title="Copy ID">
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="electionTitle">Election Title</label>
+                <div class="input-wrapper">
+                    <input type="text" id="electionTitle" class="form-control no-icon"
+                        placeholder="e.g. Student Council 2024">
+                </div>
+                <small class="error-msg">Election title is required.</small>
+            </div>
+
+            <!-- Section: Admin -->
+            <div class="section-title">Administrator</div>
+
+            <div class="form-group">
+                <label for="username">Username</label>
+                <div class="input-wrapper">
+                    <input type="text" id="username" class="form-control" placeholder="Choose a unique username"
+                        autocomplete="off">
+                    <i class="fa-solid fa-user input-icon"></i>
+                </div>
+                <small class="error-msg" id="usernameErrorText">Username is required.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <input type="password" id="password" class="form-control" placeholder="Strong password">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                </div>
+                <small class="error-msg">Password is required.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <div class="input-wrapper">
+                    <input type="email" id="email" class="form-control" placeholder="admin@example.com">
+                    <i class="fa-solid fa-envelope input-icon"></i>
+                </div>
+                <small class="error-msg">Please enter a valid email.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <div class="input-wrapper">
+                    <input type="tel" id="phone" class="form-control" placeholder="10 digit mobile number"
+                        maxlength="10">
+                    <i class="fa-solid fa-phone input-icon"></i>
+                </div>
+                <small class="error-msg">Must be exactly 10 digits.</small>
+            </div>
+
+            <!-- Section: Institution -->
+            <div class="section-title">Institution Type</div>
+            <div class="slider-container" id="typeSlider">
+                <div class="slider-background" id="sliderBg"></div>
+                <div class="slider-option active-text" data-type="school">School</div>
+                <div class="slider-option" data-type="college">College</div>
+            </div>
+
+            <div id="schoolFields" class="dynamic-fields active">
+                <div class="form-group">
+                    <label for="schoolName">School Name</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="schoolName" class="form-control no-icon" placeholder="Enter school name">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="schoolCode">School Code</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="schoolCode" class="form-control no-icon" placeholder="e.g. SCH-001">
+                    </div>
+                </div>
+            </div>
+
+            <div id="collegeFields" class="dynamic-fields">
+                <div class="form-group">
+                    <label for="collegeName">College Name</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="collegeName" class="form-control no-icon"
+                            placeholder="Enter college name">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="collegeCode">College Code</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="collegeCode" class="form-control no-icon" placeholder="e.g. COL-ENG">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="university">University</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="university" class="form-control no-icon"
+                            placeholder="Affiliated University">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Schedule -->
+            <div class="section-title">Schedule (6 AM - 10 PM)</div>
+
+            <div class="form-group">
+                <label for="electionDate">Election Date</label>
+                <div class="input-wrapper">
+                    <input type="date" id="electionDate" class="form-control no-icon">
+
+                </div>
+                <small class="error-msg" id="dateErrorText">Invalid Date</small>
+            </div>
+
+            <div class="form-group">
+                <label for="startTime">Start Time</label>
+                <div class="input-wrapper">
+                    <input type="time" id="startTime" class="form-control no-icon">
+
+                </div>
+                <small class="error-msg" id="timeErrorText">Invalid Time (6AM - 10PM)</small>
+            </div>
+
+            <button class="submit-btn" id="submitElectionBtn">
+                Create Election <i class="fa-solid fa-rocket" style="margin-left: 8px;"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toastMsg">Operation successful</span>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCdyka1XrXKXyfmHjhQsKvDOvHT8dPnmIg",
+            authDomain: "nova-d0771.firebaseapp.com",
+            databaseURL: "https://nova-d0771-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "nova-d0771",
+            storageBucket: "nova-d0771.firebasestorage.app",
+            messagingSenderId: "650150783330",
+            appId: "1:650150783330:web:054b60bc5fb987a087243b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- DOM Elements ---
+        const openCreateBtn = document.getElementById('openCreateBtn');
+        const fullScreenForm = document.getElementById('full-screen-form');
+        const closeFormBtn = document.getElementById('closeFormBtn');
+        const electionIdDisplay = document.getElementById('electionId');
+        const copyIdBtn = document.getElementById('copyIdBtn');
+        const typeSlider = document.getElementById('typeSlider');
+        const sliderOptions = document.querySelectorAll('.slider-option');
+        const sliderBg = document.getElementById('sliderBg');
+        const schoolFields = document.getElementById('schoolFields');
+        const collegeFields = document.getElementById('collegeFields');
+        const submitBtn = document.getElementById('submitElectionBtn');
+
+        const inputs = {
+            username: document.getElementById('username'),
+            password: document.getElementById('password'),
+            email: document.getElementById('email'),
+            phone: document.getElementById('phone'),
+            title: document.getElementById('electionTitle'),
+            date: document.getElementById('electionDate'),
+            time: document.getElementById('startTime')
+        };
+
+        let currentType = 'school';
+        let electionId = '';
+        let isUsernameUnique = false;
+
+        // --- Helpers ---
+
+        function generateId() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 4; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+            return result;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const icon = toast.querySelector('i');
+
+            toast.className = `toast ${type} show`;
+            toastMsg.textContent = message;
+
+            if (type === 'success') icon.className = 'fa-solid fa-circle-check';
+            else icon.className = 'fa-solid fa-circle-exclamation';
+
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function toggleFormFields(type) {
+            currentType = type;
+            if (type === 'school') {
+                sliderBg.style.transform = 'translateX(0%)';
+                sliderOptions[0].classList.add('active-text');
+                sliderOptions[1].classList.remove('active-text');
+                schoolFields.classList.add('active');
+                collegeFields.classList.remove('active');
+            } else {
+                sliderBg.style.transform = 'translateX(100%)';
+                sliderOptions[0].classList.remove('active-text');
+                sliderOptions[1].classList.add('active-text');
+                schoolFields.classList.remove('active');
+                collegeFields.classList.add('active');
+            }
+        }
+
+        // --- Validation Logic ---
+
+        function setFieldStatus(input, isValid, customMsg = null) {
+            const formGroup = input.closest('.form-group');
+            const errorSmall = formGroup.querySelector('.error-msg');
+
+            if (isValid) {
+                input.classList.remove('invalid');
+                input.classList.add('valid');
+                formGroup.classList.remove('has-error');
+            } else {
+                input.classList.remove('valid');
+                input.classList.add('invalid');
+                formGroup.classList.add('has-error');
+                if (customMsg && errorSmall) errorSmall.textContent = customMsg;
+            }
+        }
+
+        function validatePhone() {
+            const val = inputs.phone.value.replace(/\D/g, '');
+            if (val.length === 10) {
+                setFieldStatus(inputs.phone, true);
+                inputs.phone.value = val;
+                return true;
+            } else {
+                setFieldStatus(inputs.phone, false);
+                return false;
+            }
+        }
+
+        function validateSchedule() {
+            const dateStr = inputs.date.value;
+            const timeStr = inputs.time.value;
+            const dateError = document.getElementById('dateErrorText');
+            const timeError = document.getElementById('timeErrorText');
+
+            if (!dateStr || !timeStr) {
+                if (!dateStr) setFieldStatus(inputs.date, false);
+                if (!timeStr) setFieldStatus(inputs.time, false);
+                return false;
+            }
+
+            const selectedDateTime = new Date(`${dateStr}T${timeStr}`);
+            const now = new Date();
+
+            // 1. Time Window (6 AM to 10 PM)
+            const hour = selectedDateTime.getHours();
+            if (hour < 6 || hour >= 22) {
+                setFieldStatus(inputs.time, false, "Time must be between 6 AM and 10 PM");
+                setFieldStatus(inputs.date, true);
+                return false;
+            } else {
+                setFieldStatus(inputs.time, true);
+                timeError.textContent = "Invalid Time";
+            }
+
+            // 2. Future Check
+            if (selectedDateTime <= now) {
+                setFieldStatus(inputs.date, false, "Date must be in the future");
+                setFieldStatus(inputs.time, false);
+                return false;
+            } else {
+                setFieldStatus(inputs.date, true);
+                dateError.textContent = "Invalid Date";
+            }
+            return true;
+        }
+
+        async function checkUsernameAvailability() {
+            const username = inputs.username.value.trim();
+            if (username.length < 3) {
+                setFieldStatus(inputs.username, false, "Too short (min 3 chars)");
+                isUsernameUnique = false;
+                return false;
+            }
+
+            try {
+                const snapshot = await get(ref(db, `usernames/${username}`));
+                if (snapshot.exists()) {
+                    setFieldStatus(inputs.username, false, "Username already taken");
+                    isUsernameUnique = false;
+                    return false;
+                } else {
+                    setFieldStatus(inputs.username, true);
+                    isUsernameUnique = true;
+                    return true;
+                }
+            } catch (error) {
+                console.error(error);
+                return false;
+            }
+        }
+
+        async function createElection() {
+            const basicValid = inputs.title.checkValidity() &&
+                inputs.password.checkValidity() &&
+                inputs.email.checkValidity();
+
+            if (!basicValid) {
+                showToast('Please fix invalid fields', 'error');
+                inputs.title.reportValidity();
+                inputs.password.reportValidity();
+                inputs.email.reportValidity();
+                return;
+            }
+
+            const isPhoneValid = validatePhone();
+            const isScheduleValid = validateSchedule();
+
+            if (!isUsernameUnique) await checkUsernameAvailability();
+
+            // Dynamic Data Validation
+            let institutionData = {};
+            if (currentType === 'school') {
+                const sName = document.getElementById('schoolName').value;
+                const sCode = document.getElementById('schoolCode').value;
+                if (!sName || !sCode) { showToast('School details required', 'error'); return; }
+                institutionData = { schoolName: sName, schoolCode: sCode };
+            } else {
+                const cName = document.getElementById('collegeName').value;
+                const cCode = document.getElementById('collegeCode').value;
+                if (!cName || !cCode) { showToast('College details required', 'error'); return; }
+                institutionData = {
+                    collegeName: cName,
+                    collegeCode: cCode,
+                    university: document.getElementById('university').value
+                };
+            }
+
+            if (!isUsernameUnique || !isPhoneValid || !isScheduleValid) {
+                showToast('Please correct validation errors', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Creating...';
+
+            const electionData = {
+                electionId: electionId,
+                title: inputs.title.value,
+                admin: {
+                    username: inputs.username.value.trim(),
+                    password: inputs.password.value,
+                    email: inputs.email.value,
+                    phone: inputs.phone.value
+                },
+                type: currentType,
+                ...institutionData,
+                schedule: {
+                    date: inputs.date.value,
+                    startTime: inputs.time.value,
+                    iso: new Date(`${inputs.date.value}T${inputs.time.value}`).toISOString()
+                },
+                status: 'active',
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                await set(ref(db, 'elections/' + electionId), electionData);
+                await set(ref(db, 'usernames/' + inputs.username.value.trim()), {
+                    electionId: electionId,
+                    email: inputs.email.value
+                });
+
+                showToast('Election Created Successfully!');
+
+                // Local Storage
+                localStorage.setItem('currentElectionId', electionId);
+                localStorage.setItem('adminUsername', inputs.username.value.trim());
+                localStorage.setItem('adminPassword', inputs.password.value);
+                sessionStorage.setItem('currentElectionId', electionId);
+                sessionStorage.setItem('adminUsername', inputs.username.value.trim());
+
+                setTimeout(() => window.location.href = 'admin.html', 1500);
+
+            } catch (error) {
+                console.error(error);
+                showToast('Error: ' + error.message, 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Create Election <i class="fa-solid fa-rocket" style="margin-left: 8px;"></i>';
+            }
+        }
+
+        // --- Event Listeners ---
+
+        openCreateBtn.addEventListener('click', () => {
+            electionId = generateId();
+            electionIdDisplay.innerText = electionId;
+            fullScreenForm.style.display = 'flex';
+        });
+
+        closeFormBtn.addEventListener('click', () => fullScreenForm.style.display = 'none');
+
+        sliderOptions.forEach(opt => {
+            opt.addEventListener('click', (e) => toggleFormFields(e.target.getAttribute('data-type')));
+        });
+
+        copyIdBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(electionId).then(() => showToast('ID Copied'));
+        });
+
+        // Input Listeners for Validation
+        inputs.phone.addEventListener('input', validatePhone);
+        inputs.date.addEventListener('change', validateSchedule);
+        inputs.time.addEventListener('change', validateSchedule);
+
+        let timeout;
+        inputs.username.addEventListener('input', () => {
+            inputs.username.classList.remove('valid', 'invalid');
+            isUsernameUnique = false;
+            clearTimeout(timeout);
+            timeout = setTimeout(checkUsernameAvailability, 800);
+        });
+        inputs.username.addEventListener('blur', checkUsernameAvailability);
+
+        [inputs.title, inputs.password, inputs.email].forEach(inp => {
+            inp.addEventListener('blur', () => {
+                if (inp.checkValidity()) setFieldStatus(inp, true);
+                else setFieldStatus(inp, false);
+            });
+        });
+
+        submitBtn.addEventListener('click', createElection);
+
+    </script>
+</body>
+
+</html>

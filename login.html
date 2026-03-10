@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <!-- Viewport ensures proper scaling on mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NOVA - Secure Login</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-color: #0f1014;
+            --card-bg: #1c1e26;
+            --input-bg: #272932;
+
+            /* Role Colors */
+            --admin-color: #7c4dff;
+            --admin-dark: #651fff;
+
+            --officer-color: #ff3b30;
+            --officer-dark: #d32f2f;
+
+            --voter-color: #FFC107;
+            --voter-dark: #FFA000;
+
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --border-color: #333645;
+            --error-color: #ff5252;
+            --success-color: #00e676;
+            --modal-overlay: rgba(0, 0, 0, 0.85);
+            --transition-speed: 0.4s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            /* Prevents elements from overflowing horizontal bounds */
+            max-width: 100%;
+        }
+
+        html {
+            width: 100%;
+            overflow-x: hidden;
+            /* Strictly禁止横向滚动 */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            /* Deep gradient background */
+            background: radial-gradient(circle at top left, #1a102e, var(--bg-color)),
+                radial-gradient(circle at bottom right, #151520, var(--bg-color));
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            /* Fix horizontal scroll issue */
+            padding: 15px;
+            /* Reduced padding for mobile */
+            position: relative;
+            width: 100%;
+        }
+
+        /* --- Animated Background Elements --- */
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            z-index: 0;
+            opacity: 0.25;
+            animation: floatBlob 15s infinite alternate ease-in-out;
+            /* Ensure blobs don't cause scrollbars */
+            width: 100vw;
+            height: 100vh;
+            max-width: 500px;
+            max-height: 500px;
+        }
+
+        .blob-1 {
+            width: 300px;
+            height: 300px;
+            background: var(--admin-color);
+            top: -50px;
+            left: -50px;
+        }
+
+        .blob-2 {
+            width: 250px;
+            height: 250px;
+            background: var(--officer-color);
+            bottom: -50px;
+            right: -50px;
+            animation-delay: -5s;
+        }
+
+        .blob-3 {
+            width: 200px;
+            height: 200px;
+            background: var(--voter-color);
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-duration: 20s;
+        }
+
+        @keyframes floatBlob {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            100% {
+                transform: translate(30px, 50px) scale(1.1);
+            }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* --- Animations --- */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        @keyframes flashSuccess {
+            0% {
+                border-color: var(--border-color);
+            }
+
+            50% {
+                border-color: var(--success-color);
+                background-color: rgba(0, 230, 118, 0.05);
+            }
+
+            100% {
+                border-color: var(--border-color);
+            }
+        }
+
+        @keyframes flashError {
+            0% {
+                border-color: var(--border-color);
+            }
+
+            50% {
+                border-color: var(--error-color);
+                background-color: rgba(255, 82, 82, 0.05);
+            }
+
+            100% {
+                border-color: var(--border-color);
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* --- Utility Classes --- */
+        .anim-slide-in {
+            animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .anim-pop-in {
+            animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .shake {
+            animation: shake 0.3s ease-in-out;
+        }
+
+        .flash-success {
+            animation: flashSuccess 0.8s ease-out;
+        }
+
+        .flash-error {
+            animation: flashError 0.8s ease-out;
+        }
+
+        .input-error {
+            border-color: var(--error-color) !important;
+        }
+
+        .input-success {
+            border-color: var(--success-color) !important;
+        }
+
+        /* --- Role Selection --- */
+        #roleSelection {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            perspective: 1000px;
+        }
+
+        .role-card {
+            flex: 1;
+            min-width: 260px;
+            max-width: 320px;
+            background-color: rgba(28, 30, 38, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 50px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            /* Ensure it doesn't overflow container */
+        }
+
+        .role-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        .role-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: currentColor;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease;
+        }
+
+        .role-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .role-icon {
+            font-size: 3rem;
+            margin-bottom: 25px;
+            background: rgba(255, 255, 255, 0.03);
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.4s;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .role-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .role-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .role-desc {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        /* --- Specific Card Styles --- */
+        .admin-card {
+            color: var(--admin-color);
+            border-color: rgba(124, 77, 255, 0.3);
+        }
+
+        .admin-card .role-icon {
+            color: var(--admin-color);
+            background: rgba(124, 77, 255, 0.1);
+            border-color: rgba(124, 77, 255, 0.2);
+        }
+
+        .admin-card:hover {
+            background-color: var(--admin-color);
+            border-color: var(--admin-color);
+            box-shadow: 0 20px 40px rgba(124, 77, 255, 0.4);
+        }
+
+        .admin-card:hover * {
+            color: white !important;
+        }
+
+        .admin-card:hover .role-icon {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .officer-card {
+            color: var(--officer-color);
+            border-color: rgba(255, 59, 48, 0.3);
+        }
+
+        .officer-card .role-icon {
+            color: var(--officer-color);
+            background: rgba(255, 59, 48, 0.1);
+            border-color: rgba(255, 59, 48, 0.2);
+        }
+
+        .officer-card:hover {
+            background-color: var(--officer-color);
+            border-color: var(--officer-color);
+            box-shadow: 0 20px 40px rgba(255, 59, 48, 0.4);
+        }
+
+        .officer-card:hover * {
+            color: white !important;
+        }
+
+        .officer-card:hover .role-icon {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .voter-card {
+            color: var(--voter-color);
+            border-color: rgba(255, 193, 7, 0.3);
+        }
+
+        .voter-card .role-icon {
+            color: var(--voter-color);
+            background: rgba(255, 193, 7, 0.1);
+            border-color: rgba(255, 193, 7, 0.2);
+        }
+
+        .voter-card:hover {
+            background-color: var(--voter-dark);
+            border-color: var(--voter-dark);
+            box-shadow: 0 20px 40px rgba(255, 193, 7, 0.3);
+        }
+
+        .voter-card:hover * {
+            color: white !important;
+        }
+
+        .voter-card:hover .role-icon {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        /* --- Forms --- */
+        .form-wrapper {
+            display: none;
+            background-color: rgba(28, 30, 38, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 28px;
+            padding: 40px;
+            /* Reduced from 45px */
+            border: 1px solid var(--border-color);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            max-height: 90vh;
+            overflow-y: auto;
+            width: 100%;
+            max-width: 550px;
+            margin: 0 auto;
+            position: relative;
+            scrollbar-width: thin;
+        }
+
+        .form-wrapper::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .form-wrapper::-webkit-scrollbar-thumb {
+            background-color: #444;
+            border-radius: 10px;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            transition: 0.2s;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .back-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .form-title {
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 800;
+            background: linear-gradient(45deg, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .form-group label {
+            display: block;
+            color: #ccc;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .form-control {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 2px solid transparent;
+            color: var(--text-main);
+            padding: 14px 45px 14px 16px;
+            /* Adjusted padding */
+            border-radius: 12px;
+            outline: none;
+            font-size: 1rem;
+            /* Keeps font size 16px to prevent iOS zoom */
+            transition: all 0.2s;
+            background-clip: padding-box;
+            -webkit-appearance: none;
+            /* Remove iOS styling */
+        }
+
+        .form-control:focus {
+            background-color: #323540;
+            border-color: #555;
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
+        }
+
+        .form-control[readonly] {
+            background-color: #202228;
+            color: #888;
+            cursor: default;
+            border-color: #333;
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 16px;
+            color: var(--text-muted);
+            pointer-events: none;
+            transition: 0.2s;
+        }
+
+        .form-control:focus+.input-icon {
+            color: #fff;
+        }
+
+        /* Loading spinner inside input */
+        .input-loader {
+            position: absolute;
+            right: 16px;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #555;
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        .helper-text {
+            font-size: 0.75rem;
+            margin-top: 6px;
+            min-height: 20px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-weight: 500;
+        }
+
+        .helper-text.error {
+            color: var(--error-color);
+            opacity: 1;
+        }
+
+        .helper-text.success {
+            color: var(--success-color);
+            opacity: 1;
+        }
+
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #555, #333);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.5px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #666, #444);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .paste-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #ccc;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            z-index: 10;
+        }
+
+        .paste-btn:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        /* --- Modals --- */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--modal-overlay);
+            z-index: 2000;
+            backdrop-filter: blur(10px);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 40px 30px;
+            border-radius: 28px;
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .modal-btn {
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.1);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: #555;
+        }
+
+        /* --- Updated Radio Button CSS --- */
+
+        .radio-group {
+            display: flex;
+            gap: 12px;
+            background: var(--input-bg);
+            padding: 6px;
+            border-radius: 14px;
+        }
+
+        .radio-item {
+            flex: 1;
+            position: relative;
+        }
+
+        /* The actual radio input - invisible but clickable */
+        .radio-item input {
+            opacity: 0;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            z-index: 10;
+            /* Ensures it sits on top to capture clicks */
+        }
+
+        /* The label (what you visually see) */
+        .radio-item label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            cursor: pointer;
+            border-radius: 10px;
+            margin: 0;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.95rem;
+            z-index: 1;
+        }
+
+        /* The Highlighted/Checked State */
+        .radio-item input:checked+label {
+            background-color: var(--admin-color);
+            /* Fixed: Uses defined purple color */
+            color: white;
+            box-shadow: 0 4px 12px rgba(124, 77, 255, 0.5);
+            /* Stronger glow */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            /* Subtle border for clarity */
+        }
+
+        /* --- Toast --- */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background-color: #2a2d36;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 60px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            z-index: 3000;
+            border: 1px solid #444;
+            white-space: nowrap;
+            font-weight: 500;
+            width: max-content;
+            max-width: 90%;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* --- Mobile Responsive Tweaks --- */
+        @media (max-width: 700px) {
+            body {
+                padding: 10px;
+                /* Fix background fixed positioning issue on iOS */
+                background-attachment: scroll;
+            }
+
+            .container {
+                padding: 0;
+            }
+
+            /* Form Wrapper Mobile Fixes */
+            .form-wrapper {
+                padding: 25px 20px;
+                /* Less padding to fit more content */
+                border-radius: 20px;
+                max-height: 88vh;
+                /* Leave room for bottom bar if any */
+            }
+
+            .form-title {
+                font-size: 1.5rem;
+                margin-bottom: 25px;
+            }
+
+            .role-card {
+                min-width: 100%;
+                /* Full width */
+                max-width: 100%;
+                flex-direction: row;
+                /* Side by side layout */
+                text-align: left;
+                padding: 20px;
+                margin-bottom: 10px;
+            }
+
+            .role-icon {
+                margin-bottom: 0;
+                margin-right: 20px;
+                width: 60px;
+                /* Smaller icon */
+                height: 60px;
+                font-size: 1.5rem;
+                flex-shrink: 0;
+            }
+
+            .role-info {
+                flex: 1;
+                justify-content: center;
+                overflow: hidden;
+                /* Prevent text spill */
+            }
+
+            .role-title {
+                font-size: 1.2rem;
+                margin-bottom: 5px;
+            }
+
+            .role-desc {
+                font-size: 0.85rem;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .form-row .form-group {
+                margin-bottom: 20px;
+            }
+
+            /* Adjust Inputs for Touch */
+            .form-control {
+                padding: 14px 45px 14px 16px;
+                font-size: 16px;
+                /* Prevents zoom */
+            }
+
+            .login-btn {
+                padding: 14px;
+                font-size: 1rem;
+            }
+
+            .paste-btn {
+                width: 34px;
+                height: 34px;
+                right: 6px;
+            }
+
+            /* Adjust input right padding to accommodate paste button */
+            .input-group:has(.paste-btn) .form-control {
+                padding-right: 50px;
+            }
+
+            .bg-blob {
+                opacity: 0.15;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Animated Background Elements -->
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="bg-blob blob-3"></div>
+
+    <div class="container">
+        <!-- 1. Role Selection -->
+        <div id="roleSelection" class="anim-slide-in">
+
+            <!-- Admin Card -->
+            <div class="role-card admin-card" onclick="openAdminLogin()">
+                <div class="role-icon"><i class="fa-solid fa-user-shield"></i></div>
+                <div class="role-info">
+                    <div class="role-title">Admin</div>
+                    <div class="role-desc">Manage elections</div>
+                </div>
+            </div>
+
+            <!-- Officer Card -->
+            <div class="role-card officer-card" onclick="openOfficerLogin()">
+                <div class="role-icon"><i class="fa-solid fa-user-tie"></i></div>
+                <div class="role-info">
+                    <div class="role-title">Officer</div>
+                    <div class="role-desc">Manage booth</div>
+                </div>
+            </div>
+
+            <!-- Voter Card -->
+            <div class="role-card voter-card" onclick="openVoterChoice()">
+                <div class="role-icon"><i class="fa-solid fa-check-to-slot"></i></div>
+                <div class="role-info">
+                    <div class="role-title">Voter</div>
+                    <div class="role-desc">Cast your vote</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Admin Login -->
+        <div id="adminLoginForm" class="form-wrapper">
+            <button class="back-btn" onclick="goHome()"><i class="fa-solid fa-arrow-left"></i> Back</button>
+            <h2 class="form-title" style="color: var(--admin-color)">Admin Access</h2>
+
+            <div class="form-group">
+                <label>Username</label>
+                <div class="input-group">
+                    <input type="text" id="adminUsername" class="form-control" placeholder="Enter Admin Username"
+                        autocomplete="off">
+                    <i class="fa-regular fa-user input-icon"></i>
+                    <div id="adminLoader" class="input-loader"></div>
+                </div>
+                <div id="adminUsernameMsg" class="helper-text"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Election ID (Auto-filled)</label>
+                <div class="input-group">
+                    <input type="text" id="adminElectionId" class="form-control" placeholder="Enter username first"
+                        readonly>
+                    <i class="fa-solid fa-fingerprint input-icon"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <div class="input-group">
+                    <input type="password" id="adminPassword" class="form-control" placeholder="Secure Password">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                </div>
+            </div>
+
+            <button class="login-btn" style="background: var(--admin-color)" onclick="handleAdminLogin()">Secure
+                Login</button>
+        </div>
+
+        <!-- 3. Officer Login -->
+        <div id="officerLoginForm" class="form-wrapper">
+            <button class="back-btn" onclick="goHome()"><i class="fa-solid fa-arrow-left"></i> Back</button>
+            <h2 class="form-title" style="color: var(--officer-color)">Officer Access</h2>
+            <div class="form-group">
+                <label>Election ID</label>
+                <div class="input-group">
+                    <input type="text" id="officerElectionId" class="form-control" placeholder="Election ID">
+                    <button class="paste-btn" onclick="pasteCredentials()" title="Paste from Clipboard">
+                        <i class="fa-solid fa-paste"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Username</label>
+                <div class="input-group">
+                    <input type="text" id="officerUsername" class="form-control" placeholder="Officer Username">
+                    <i class="fa-regular fa-user input-icon"></i>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <div class="input-group">
+                    <input type="password" id="officerPassword" class="form-control" placeholder="Password">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                </div>
+            </div>
+            <button class="login-btn" style="background: var(--officer-color)" onclick="handleOfficerLogin()">Login as
+                Officer</button>
+        </div>
+
+        <!-- 4. Voter Login -->
+        <div id="voterLoginForm" class="form-wrapper">
+            <button class="back-btn" onclick="goHome()"><i class="fa-solid fa-arrow-left"></i> Back</button>
+            <h2 class="form-title" style="color: var(--voter-color)">Voter Login</h2>
+            <div class="form-group">
+                <label>Username / ID / AdmNo</label>
+                <div class="input-group">
+                    <input type="text" id="voterUsernameLogin" class="form-control" placeholder="Enter ID">
+                    <i class="fa-regular fa-user input-icon"></i>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <div class="input-group">
+                    <input type="password" id="voterPasswordLogin" class="form-control" placeholder="Password">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                </div>
+            </div>
+            <button class="login-btn" style="background: var(--voter-color); color: #000;"
+                onclick="handleVoterLogin()">Login to Vote</button>
+        </div>
+
+        <!-- 5. School Registration -->
+        <div id="schoolRegForm" class="form-wrapper">
+            <button class="back-btn" onclick="goHome()"><i class="fa-solid fa-arrow-left"></i> Back</button>
+            <h2 class="form-title">School Registration</h2>
+
+            <div class="form-group">
+                <label>Username <span style="color:var(--error-color)">*</span></label>
+                <div class="input-group">
+                    <input type="text" id="s_username" class="form-control" placeholder="Choose unique username">
+                    <i class="fa-regular fa-user input-icon"></i>
+                    <div id="s_username_loader" class="input-loader"></div>
+                </div>
+                <div id="s_username_msg" class="helper-text">Checking availability...</div>
+            </div>
+
+            <div class="form-group"><label>Full Name</label><input type="text" id="s_name" class="form-control"></div>
+
+            <div class="form-row">
+                <div class="form-group"><label>Password</label><input type="password" id="s_password"
+                        class="form-control"></div>
+                <div class="form-group">
+                    <label>PIN Code (6 Digits)</label>
+                    <input type="password" id="s_pin" class="form-control" maxlength="6" placeholder="6-digit PIN">
+                </div>
+            </div>
+
+            <div class="form-group"><label>Confirm PIN</label><input type="password" id="s_confirmPin"
+                    class="form-control" maxlength="6"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="s_email" class="form-control"></div>
+
+            <div class="form-group">
+                <label>Gender</label>
+                <div class="radio-group">
+                    <div class="radio-item"><input type="radio" name="s_gender" id="s_girl" value="Girl" checked><label
+                            for="s_girl">Girl</label></div>
+                    <div class="radio-item"><input type="radio" name="s_gender" id="s_boy" value="Boy"><label
+                            for="s_boy">Boy</label></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Date of Birth (Age 7-16)</label>
+                <input type="date" id="s_dob" class="form-control">
+                <div id="s_dob_msg" class="helper-text"></div>
+            </div>
+
+            <div class="form-group"><label>School Name</label><input type="text" id="s_schoolName" class="form-control">
+            </div>
+            <div class="form-group"><label>School Code</label><input type="text" id="s_schoolCode" class="form-control">
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Class</label><input type="text" id="s_class" class="form-control"></div>
+                <div class="form-group"><label>Division</label><input type="text" id="s_division" class="form-control">
+                </div>
+            </div>
+            <div class="form-group"><label>Roll Number</label><input type="text" id="s_roll" class="form-control"></div>
+            <button class="login-btn" onclick="registerSchoolVoter()">Register & Vote</button>
+        </div>
+
+        <!-- 6. College Registration -->
+        <div id="collegeRegForm" class="form-wrapper">
+            <button class="back-btn" onclick="goHome()"><i class="fa-solid fa-arrow-left"></i> Back</button>
+            <h2 class="form-title">College Registration</h2>
+
+            <div class="form-group">
+                <label>Username <span style="color:var(--error-color)">*</span></label>
+                <div class="input-group">
+                    <input type="text" id="c_username" class="form-control" placeholder="Choose unique username">
+                    <i class="fa-regular fa-user input-icon"></i>
+                    <div id="c_username_loader" class="input-loader"></div>
+                </div>
+                <div id="c_username_msg" class="helper-text">Checking availability...</div>
+            </div>
+
+            <div class="form-group"><label>Full Name</label><input type="text" id="c_name" class="form-control"></div>
+
+            <div class="form-row">
+                <div class="form-group"><label>Password</label><input type="password" id="c_password"
+                        class="form-control"></div>
+                <div class="form-group">
+                    <label>PIN Code (6 Digits)</label>
+                    <input type="password" id="c_pin" class="form-control" maxlength="6">
+                </div>
+            </div>
+            <div class="form-group"><label>Confirm PIN</label><input type="password" id="c_confirmPin"
+                    class="form-control" maxlength="6"></div>
+
+            <div class="form-row">
+                <div class="form-group"><label>Phone (10 Digits)</label><input type="tel" id="c_phone"
+                        class="form-control"></div>
+                <div class="form-group"><label>Email</label><input type="email" id="c_email" class="form-control"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Gender</label>
+                <div class="radio-group">
+                    <div class="radio-item"><input type="radio" name="c_gender" id="c_male" value="Male" checked><label
+                            for="c_male">Male</label></div>
+                    <div class="radio-item"><input type="radio" name="c_gender" id="c_female" value="Female"><label
+                            for="c_female">Female</label></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Date of Birth (Age 16+)</label>
+                <input type="date" id="c_dob" class="form-control">
+                <div id="c_dob_msg" class="helper-text"></div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group"><label>College Code</label><input type="text" id="c_collegeCode"
+                        class="form-control"></div>
+                <div class="form-group"><label>Admission No</label><input type="text" id="c_admNo" class="form-control">
+                </div>
+            </div>
+            <div class="form-group"><label>University Code</label><input type="text" id="c_uniCode"
+                    class="form-control"></div>
+            <button class="login-btn" onclick="registerCollegeVoter()">Register & Vote</button>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modalVoterChoice" class="modal">
+        <div class="modal-content anim-pop-in">
+            <h2 class="form-title">Voter Status</h2>
+            <p class="role-desc">Are you a new voter or already registered?</p>
+            <div class="modal-buttons">
+                <button class="modal-btn btn-primary" style="background: var(--voter-dark); color:white"
+                    onclick="showVoterLogin()">Existing Voter</button>
+                <button class="modal-btn btn-secondary" onclick="showInstitutionChoice()">New Voter</button>
+            </div>
+            <button class="back-btn" style="margin: 20px auto 0; width: fit-content;"
+                onclick="closeModal('modalVoterChoice')">Cancel</button>
+        </div>
+    </div>
+
+    <div id="modalInstChoice" class="modal">
+        <div class="modal-content anim-pop-in">
+            <h2 class="form-title">Institution Type</h2>
+            <p class="role-desc">Select your institution type</p>
+            <div class="modal-buttons">
+                <button class="modal-btn btn-primary" style="background: var(--admin-color)"
+                    onclick="showSchoolForm()">School</button>
+                <button class="modal-btn btn-secondary" onclick="showCollegeForm()">College</button>
+            </div>
+            <button class="back-btn" style="margin: 20px auto 0; width: fit-content;"
+                onclick="closeModal('modalInstChoice')">Back</button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">
+        <i class="fa-solid fa-circle-info"></i>
+        <span id="toastMsg">Message</span>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, get, set, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCdyka1XrXKXyfmHjhQsKvDOvHT8dPnmIg",
+            authDomain: "nova-d0771.firebaseapp.com",
+            databaseURL: "https://nova-d0771-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "nova-d0771",
+            storageBucket: "nova-d0771.firebasestorage.app",
+            messagingSenderId: "650150783330",
+            appId: "1:650150783330:web:054b60bc5fb987a087243b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- Helper: Safe Database Get ---
+        async function safeGet(dbRef, timeoutMs = 10000) {
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Request timed out")), timeoutMs)
+            );
+            return Promise.race([get(dbRef), timeoutPromise]);
+        }
+
+        // --- Helper: Validate Email ---
+        function validateEmail(email) {
+            return String(email).toLowerCase().match(
+                /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+            );
+        }
+
+        // --- Helper: Validate Phone (10 digits) ---
+        function validatePhone(phone) {
+            return /^\d{10}$/.test(phone);
+        }
+
+        // --- Helper: Validate Age ---
+        function validateAge(dateString, type) {
+            if (!dateString) return { valid: false, msg: "Date required" };
+            const today = new Date();
+            const birthDate = new Date(dateString);
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+
+            if (type === 'school') {
+                // School: 7 to 16
+                if (age < 7) return { valid: false, msg: `Age must be at least 7. You are ${age}.` };
+                if (age > 16) return { valid: false, msg: `Age must be max 16. You are ${age}.` };
+            } else if (type === 'college') {
+                // College: Above 16
+                if (age < 16) return { valid: false, msg: `Age must be above 16. You are ${age}.` };
+            }
+            return { valid: true, msg: "Age OK" };
+        }
+
+        // --- UI Navigation ---
+        window.openAdminLogin = () => {
+            hideAll();
+            document.getElementById('adminLoginForm').style.display = 'block';
+            document.getElementById('adminLoginForm').classList.add('anim-slide-in');
+        };
+        window.openOfficerLogin = () => {
+            hideAll();
+            document.getElementById('officerLoginForm').style.display = 'block';
+            document.getElementById('officerLoginForm').classList.add('anim-slide-in');
+        };
+        window.openVoterChoice = () => {
+            document.getElementById('modalVoterChoice').style.display = 'flex';
+        };
+        window.goHome = () => {
+            hideAll();
+            document.getElementById('roleSelection').style.display = 'flex';
+        };
+        window.showVoterLogin = () => {
+            closeModal('modalVoterChoice');
+            hideAll();
+            document.getElementById('voterLoginForm').style.display = 'block';
+            document.getElementById('voterLoginForm').classList.add('anim-slide-in');
+        };
+        window.showInstitutionChoice = () => {
+            closeModal('modalVoterChoice');
+            document.getElementById('modalInstChoice').style.display = 'flex';
+        };
+        window.showSchoolForm = () => {
+            closeModal('modalInstChoice');
+            hideAll();
+            document.getElementById('schoolRegForm').style.display = 'block';
+            document.getElementById('schoolRegForm').classList.add('anim-slide-in');
+        };
+        window.showCollegeForm = () => {
+            closeModal('modalInstChoice');
+            hideAll();
+            document.getElementById('collegeRegForm').style.display = 'block';
+            document.getElementById('collegeRegForm').classList.add('anim-slide-in');
+        };
+        window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+
+        function hideAll() {
+            const elements = ['roleSelection', 'adminLoginForm', 'officerLoginForm', 'voterLoginForm', 'schoolRegForm', 'collegeRegForm'];
+            elements.forEach(id => {
+                const el = document.getElementById(id);
+                el.style.display = 'none';
+                el.classList.remove('anim-slide-in');
+            });
+        }
+
+        function resetBtn(btn) {
+            btn.disabled = false;
+            btn.textContent = 'Try Again';
+            setTimeout(() => {
+                if (btn.textContent === 'Try Again') btn.textContent = btn.getAttribute('initial-text');
+            }, 2000);
+        }
+
+        // --- Admin Logic (Username -> Auto Election ID) ---
+
+        const adminUsernameInput = document.getElementById('adminUsername');
+        const adminElectionIdInput = document.getElementById('adminElectionId');
+        const adminLoader = document.getElementById('adminLoader');
+        const adminUsernameMsg = document.getElementById('adminUsernameMsg');
+        let adminDebounceTimer;
+
+        adminUsernameInput.addEventListener('input', () => {
+            adminElectionIdInput.value = '';
+            adminUsernameMsg.textContent = '';
+            adminUsernameInput.classList.remove('input-success', 'input-error');
+        });
+
+        adminUsernameInput.addEventListener('blur', async () => {
+            const username = adminUsernameInput.value.trim();
+            if (!username) return;
+
+            adminLoader.style.display = 'block';
+            adminUsernameMsg.textContent = 'Searching elections...';
+            adminUsernameMsg.className = 'helper-text';
+
+            try {
+                const snapshot = await safeGet(ref(db, 'elections'));
+                let foundId = null;
+
+                if (snapshot.exists()) {
+                    snapshot.forEach(childSnapshot => {
+                        const electionData = childSnapshot.val();
+                        if (electionData.admin && electionData.admin.username === username) {
+                            foundId = childSnapshot.key;
+                        }
+                    });
+                }
+
+                adminLoader.style.display = 'none';
+
+                if (foundId) {
+                    adminElectionIdInput.value = foundId;
+                    adminUsernameMsg.textContent = 'Election ID found';
+                    adminUsernameMsg.className = 'helper-text success';
+                    adminUsernameInput.classList.add('input-success');
+                    adminElectionIdInput.classList.add('input-success');
+                } else {
+                    adminUsernameMsg.textContent = 'No election found for this Admin';
+                    adminUsernameMsg.className = 'helper-text error';
+                    adminUsernameInput.classList.add('input-error');
+                    adminElectionIdInput.classList.add('input-error');
+                    adminUsernameInput.classList.add('shake');
+                    setTimeout(() => adminUsernameInput.classList.remove('shake'), 500);
+                }
+            } catch (e) {
+                adminLoader.style.display = 'none';
+                adminUsernameMsg.textContent = 'Connection error';
+                adminUsernameMsg.className = 'helper-text error';
+            }
+        });
+
+        window.handleAdminLogin = async () => {
+            const username = adminUsernameInput.value.trim();
+            const electionId = adminElectionIdInput.value.trim();
+            const password = document.getElementById('adminPassword').value.trim();
+            const btn = document.querySelector('#adminLoginForm .login-btn');
+
+            if (!username || !electionId || !password) { showToast('Please fill all fields', 'error'); return; }
+
+            btn.textContent = 'Verifying...';
+            btn.disabled = true;
+
+            try {
+                const snapshot = await safeGet(ref(db, `elections/${electionId}`));
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    if (data.admin && data.admin.username === username && data.admin.password === password) {
+                        showToast('Login Successful!', 'success');
+                        sessionStorage.setItem('currentElectionId', electionId);
+                        localStorage.setItem('currentElectionId', electionId);
+                        setTimeout(() => window.location.href = 'admin.html', 1500);
+                    } else {
+                        throw new Error("Invalid credentials");
+                    }
+                } else {
+                    throw new Error("Election not found");
+                }
+            } catch (e) {
+                console.error(e);
+                showToast(e.message === "Request timed out" ? "Connection Timeout" : e.message, 'error');
+                resetBtn(btn);
+            }
+        };
+
+        // --- Officer Login ---
+        window.pasteCredentials = async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                const electionIdMatch = text.match(/Election ID\s*:\s*(.*)/i);
+                const usernameMatch = text.match(/Username\s*:\s*(.*)/i);
+                const passwordMatch = text.match(/Password\s*:\s*(.*)/i);
+
+                if (electionIdMatch && usernameMatch && passwordMatch) {
+                    const elId = document.getElementById('officerElectionId');
+                    const elUser = document.getElementById('officerUsername');
+                    const elPass = document.getElementById('officerPassword');
+
+                    elId.value = electionIdMatch[1].trim();
+                    elUser.value = usernameMatch[1].trim();
+                    elPass.value = passwordMatch[1].trim();
+
+                    [elId, elUser, elPass].forEach(el => {
+                        el.classList.remove('input-success');
+                        void el.offsetWidth;
+                        el.classList.add('input-success');
+                    });
+
+                    showToast('Credentials Pasted! Logging in...', 'success');
+                    setTimeout(handleOfficerLogin, 800);
+                } else {
+                    showToast('Invalid clipboard format', 'error');
+                }
+            } catch (err) {
+                showToast('Failed to read clipboard', 'error');
+            }
+        };
+
+        window.handleOfficerLogin = async () => {
+            const electionId = document.getElementById('officerElectionId').value.trim().toUpperCase();
+            const username = document.getElementById('officerUsername').value.trim();
+            const password = document.getElementById('officerPassword').value.trim();
+            const btn = document.querySelector('#officerLoginForm .login-btn');
+
+            if (!electionId || !username || !password) { showToast('Please fill all fields', 'error'); return; }
+
+            btn.textContent = 'Verifying...';
+            btn.disabled = true;
+
+            try {
+                const electionSnap = await safeGet(ref(db, `elections/${electionId}`));
+                if (!electionSnap.exists()) throw new Error("Election not found");
+
+                const officersSnap = await safeGet(ref(db, `elections/${electionId}/officers`));
+                if (officersSnap.exists()) {
+                    const officers = officersSnap.val();
+                    let found = null;
+                    for (const [key, val] of Object.entries(officers)) {
+                        if (val.username === username && val.password === password) {
+                            found = { id: key, ...val };
+                            break;
+                        }
+                    }
+                    if (found) {
+                        showToast('Login Successful!', 'success');
+                        sessionStorage.setItem('currentElectionId', electionId);
+                        sessionStorage.setItem('officerId', found.id);
+                        sessionStorage.setItem('officerName', found.name);
+                        setTimeout(() => window.location.href = 'officer.html', 1500);
+                    } else {
+                        throw new Error("Invalid credentials");
+                    }
+                } else {
+                    throw new Error("No officers assigned");
+                }
+            } catch (e) {
+                console.error(e);
+                showToast(e.message === "Request timed out" ? "Connection Timeout" : e.message, 'error');
+                resetBtn(btn);
+            }
+        };
+
+        // --- Voter Login ---
+        window.handleVoterLogin = async () => {
+            const usernameInput = document.getElementById('voterUsernameLogin').value.trim();
+            const passwordInput = document.getElementById('voterPasswordLogin').value.trim();
+            const btn = document.querySelector('#voterLoginForm .login-btn');
+
+            if (!usernameInput || !passwordInput) { showToast('Please fill all fields', 'error'); return; }
+
+            btn.textContent = 'Verifying...';
+            btn.disabled = true;
+
+            try {
+                const snapshot = await safeGet(ref(db, 'voters'));
+                if (snapshot.exists()) {
+                    const allVoters = snapshot.val();
+                    let foundId = null;
+                    let foundData = null;
+
+                    for (const voterId in allVoters) {
+                        const voter = allVoters[voterId];
+                        if (voter.username === usernameInput || voter.admNo === usernameInput || voter.rollNo === usernameInput) {
+                            foundId = voterId;
+                            foundData = voter;
+                            break;
+                        }
+                    }
+
+                    if (foundData) {
+                        if (foundData.password && foundData.password.trim() === passwordInput) {
+                            showToast('Login Successful!', 'success');
+                            sessionStorage.setItem('voterId', foundId);
+                            sessionStorage.setItem('voterName', foundData.name);
+                            setTimeout(() => window.location.href = 'voter.html', 1500);
+                        } else {
+                            throw new Error("Invalid Password");
+                        }
+                    } else {
+                        throw new Error("User ID not found.");
+                    }
+                } else {
+                    throw new Error("No voters registered yet.");
+                }
+            } catch (e) {
+                console.error(e);
+                showToast(e.message === "Request timed out" ? "Connection Timeout" : e.message, 'error');
+                resetBtn(btn);
+            }
+        };
+
+        // --- Unique Username Checker Logic ---
+        async function checkUsernameAvailability(username, inputId, msgId, loaderId) {
+            const input = document.getElementById(inputId);
+            const msg = document.getElementById(msgId);
+            const loader = document.getElementById(loaderId);
+
+            if (!username) {
+                input.classList.remove('input-success', 'input-error');
+                msg.textContent = '';
+                return false;
+            }
+
+            loader.style.display = 'block';
+            msg.textContent = 'Checking availability...';
+            msg.className = 'helper-text';
+
+            try {
+                const snapshot = await safeGet(ref(db, 'voters'));
+                let isTaken = false;
+                if (snapshot.exists()) {
+                    const voters = snapshot.val();
+                    for (const key in voters) {
+                        if (voters[key].username === username) {
+                            isTaken = true;
+                            break;
+                        }
+                    }
+                }
+                loader.style.display = 'none';
+
+                if (isTaken) {
+                    msg.textContent = 'Username already taken';
+                    msg.className = 'helper-text error';
+                    input.classList.add('input-error');
+                    input.classList.remove('input-success');
+                    return true; // Error state
+                } else {
+                    msg.textContent = 'Username available';
+                    msg.className = 'helper-text success';
+                    input.classList.add('input-success');
+                    input.classList.remove('input-error');
+                    return false; // Success state
+                }
+            } catch (e) {
+                loader.style.display = 'none';
+                msg.textContent = 'Error checking username';
+                msg.className = 'helper-text error';
+                return true;
+            }
+        }
+
+        document.getElementById('s_username').addEventListener('blur', (e) => {
+            checkUsernameAvailability(e.target.value.trim(), 's_username', 's_username_msg', 's_username_loader');
+        });
+
+        document.getElementById('c_username').addEventListener('blur', (e) => {
+            checkUsernameAvailability(e.target.value.trim(), 'c_username', 'c_username_msg', 'c_username_loader');
+        });
+
+        // --- Registration Logic ---
+
+        window.registerSchoolVoter = async () => {
+            const name = document.getElementById('s_name').value.trim();
+            const username = document.getElementById('s_username').value.trim();
+            const password = document.getElementById('s_password').value.trim();
+            const pin = document.getElementById('s_pin').value.trim();
+            const confirmPin = document.getElementById('s_confirmPin').value.trim();
+            const email = document.getElementById('s_email').value.trim();
+            const gender = document.querySelector('input[name="s_gender"]:checked').value;
+            const dob = document.getElementById('s_dob').value;
+            const schoolName = document.getElementById('s_schoolName').value.trim();
+            const schoolCode = document.getElementById('s_schoolCode').value.trim();
+            const sClass = document.getElementById('s_class').value.trim();
+            const division = document.getElementById('s_division').value.trim();
+            const rollNo = document.getElementById('s_roll').value.trim();
+
+            const isTaken = await checkUsernameAvailability(username, 's_username', 's_username_msg', 's_username_loader');
+            if (isTaken) return;
+
+            if (!name || !username || !password || !email || !dob || !schoolName) {
+                showToast('Please fill all required fields', 'error'); return;
+            }
+
+            if (!validateEmail(email)) { showToast('Invalid Email format', 'error'); return; }
+
+            const ageCheck = validateAge(dob, 'school');
+            if (!ageCheck.valid) { showToast(ageCheck.msg, 'error'); return; }
+
+            if (!/^\d{6}$/.test(pin)) { showToast('PIN must be exactly 6 digits', 'error'); return; }
+            if (pin !== confirmPin) { showToast('PINs do not match', 'error'); return; }
+
+            await submitVoterData({
+                type: 'school',
+                name, username, password, email, gender, dob,
+                class: sClass, division, rollNo, schoolName, schoolCode, pin
+            });
+        };
+
+        window.registerCollegeVoter = async () => {
+            const name = document.getElementById('c_name').value.trim();
+            const username = document.getElementById('c_username').value.trim();
+            const password = document.getElementById('c_password').value.trim();
+            const pin = document.getElementById('c_pin').value.trim();
+            const confirmPin = document.getElementById('c_confirmPin').value.trim();
+            const phone = document.getElementById('c_phone').value.trim();
+            const email = document.getElementById('c_email').value.trim();
+            const gender = document.querySelector('input[name="c_gender"]:checked').value;
+            const dob = document.getElementById('c_dob').value;
+            const collegeCode = document.getElementById('c_collegeCode').value.trim();
+            const admNo = document.getElementById('c_admNo').value.trim();
+            const uniCode = document.getElementById('c_uniCode').value.trim();
+
+            const isTaken = await checkUsernameAvailability(username, 'c_username', 'c_username_msg', 'c_username_loader');
+            if (isTaken) return;
+
+            if (!name || !username || !password || !phone || !email || !dob) {
+                showToast('Please fill all required fields', 'error'); return;
+            }
+
+            if (!validatePhone(phone)) { showToast('Phone number must be 10 digits', 'error'); return; }
+            if (!validateEmail(email)) { showToast('Invalid Email format', 'error'); return; }
+
+            const ageCheck = validateAge(dob, 'college');
+            if (!ageCheck.valid) { showToast(ageCheck.msg, 'error'); return; }
+
+            if (!/^\d{6}$/.test(pin)) { showToast('PIN must be exactly 6 digits', 'error'); return; }
+            if (pin !== confirmPin) { showToast('PINs do not match', 'error'); return; }
+
+            await submitVoterData({
+                type: 'college',
+                name, username, password, phone, email, gender, dob,
+                collegeCode, admNo, uniCode, pin
+            });
+        };
+
+        function generateVoterId() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 6; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+            return result;
+        }
+
+        async function submitVoterData(data) {
+            const btn = document.querySelector('.form-wrapper[style*="block"] .login-btn');
+            btn.textContent = 'Registering...';
+            btn.disabled = true;
+
+            const voterId = generateVoterId();
+            data.voterId = voterId;
+            data.timestamp = Date.now();
+
+            try {
+                await set(ref(db, 'voters/' + voterId), data);
+                showToast(`Registered! ID: ${voterId}`, 'success');
+                sessionStorage.setItem('voterId', voterId);
+                sessionStorage.setItem('voterName', data.name);
+                setTimeout(() => window.location.href = 'voter.html', 2000);
+            } catch (e) {
+                console.error(e);
+                showToast('Registration failed', 'error');
+                resetBtn(btn);
+            }
+        }
+
+        window.showToast = (message, type = 'info') => {
+            const toast = document.getElementById('toast');
+            const msg = document.getElementById('toastMsg');
+            const icon = toast.querySelector('i');
+            toast.style.borderColor = type === 'error' ? 'var(--error-color)' : (type === 'success' ? 'var(--success-color)' : '#555');
+            icon.className = type === 'error' ? 'fa-solid fa-circle-exclamation' : (type === 'success' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-info');
+            icon.style.color = type === 'error' ? 'var(--error-color)' : (type === 'success' ? 'var(--success-color)' : '#fff');
+            msg.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        document.querySelectorAll('.login-btn').forEach(b => b.setAttribute('initial-text', b.innerText));
+    </script>
+</body>
+
+</html>
